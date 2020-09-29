@@ -6,7 +6,7 @@ import sys, time, re, os
 from selenium import webdriver
 from SeleniumLibrary.base import keyword, LibraryComponent
 from SeleniumLibrary.keywords import BrowserManagementKeywords
-
+import platform
 # reload(sys)
 # sys.setdefaultencoding('utf8')
 
@@ -529,7 +529,10 @@ class SeleniumExtend(Selenium2Library):
     def start_browser(self,browser):
 
         if browser.upper() == 'CHROME':
-            command = 'start chrome.exe --remote-debugging-port=9222 --user-data-dir="../AutomationProfile"'
+            if platform.system()=='Windows':
+                command = 'start chrome.exe --remote-debugging-port=9222 --user-data-dir="../../AutomationProfile"'
+            elif platform.system()=='Darwin':
+                command = '/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222 --user-data-dir="../../AutomationProfile"'
             os.system(command)
 
     @keyword
@@ -539,7 +542,12 @@ class SeleniumExtend(Selenium2Library):
         """
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_experimental_option("debuggerAddress", "localhost:9222")
-        chrome_driver = "chromedriver.exe"
+        if platform.system() == 'Windows':
+
+            chrome_driver = "chromedriver.exe"
+        elif platform.system() == 'Darwin':
+            chrome_driver = "chromedriver"
+
         driver = webdriver.Chrome(chrome_driver, chrome_options=chrome_options)
         self.debug('Opened browser with session id %s.' % driver.session_id)
         return self._drivers.register(driver, alias)
