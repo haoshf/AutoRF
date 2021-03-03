@@ -1,0 +1,18 @@
+urllib3==1.22
+SQLAlchemy==1.2.7
+Django==3.0.5
+Flask==1.1.2
+APScheduler==3.5.1
+PyMySQL==0.9.3
+requests==2.21.0
+django_apscheduler==0.5.2
+Pillow==8.1.0
+python_dateutil==2.8.1
+robotframework==3.2.2
+robotframework-appiumlibrary==1.4.6
+robotframework-httplibrary3==0.6.0
+robotframework-pythonlibcore==2.1.0
+robotframework-requests==0.4.7
+robotframework-selenium2library 3.0.0
+robotframework-seleniumlibrary==3.1.1
+selenium==3.141.0

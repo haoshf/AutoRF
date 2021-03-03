@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+
+{% block styles %}
+    <style>
+        h2 {
+            color: red;
+        }
+        #iframe {
+            position: absolute;
+            transform: scale(.7, .7) translate(-50%, -50%);
+            width: 138%;
+            height: 2800%;
+            top: 320px;
+            left: 30%;
+        }
+    </style>
+
+{% endblock %}
+
+{% block content %}
+    <ol class="breadcrumb" style="margin-bottom: 0;">
+        <li class="active">报告展示</li>
+    </ol>
+    <div class="container-fluid">
+    <iframe id="iframe" name="ifra"></iframe>
+        <form id="fm" action="/report.html?nid={{ nid }}" method="POST" target="ifra">
+{#            <input name="root" value="111111" />#}
+{#            <a onclick="AjaxSubmit5()">提交</a>#}
+        </form>
+    </div>
+    <script>
+{#        $(function () {#}
+{#            Ready();#}
+{#        });#}
+
+        function AjaxSubmit5() {
+            document.getElementById('iframe').onload = reloadIframe;
+            document.getElementById('fm').submit();
+        }
+
+        function reloadIframe() {
+            // this=当前标签
+            //console.log(ths);
+            //console.log(ths.contentWindow);
+            //console.log(ths.contentWindow.document.body.innerHTML);
+            //console.log($(ths).contents().find('body').html());
+            var src = this.contentWindow.document.body;
+            src.setAttribute("style", "font-size:1.5em;");
+        }
+            //jQuery的页面加载完成时触发的事件)
+
+         window.onload=function(){
+            AjaxSubmit5();
+        }
+
+    </script>
+{% endblock %}

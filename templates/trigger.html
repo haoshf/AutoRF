@@ -1,0 +1,150 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block styles %}
+    <style>
+        #active>li.active {
+            color: red;
+            font-size: 100px;
+        }
+    </style>
+
+{% endblock %}
+
+{% block content %}
+    <ol class="breadcrumb" style="margin-bottom: 0;">
+        <li class="active">调度列表</li>
+    </ol>
+    <div>
+        <div>
+            <table class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                    <th><input type="checkbox" name="checkboxlist" onclick="clickDome(this);"></th>
+                    <th>ID</th>
+                    <th>项目名称</th>
+                    <th>调度状态</th>
+                    <th>配置者</th>
+                    <th>时间调度</th>
+                    <th>运行状态</th>
+                </tr>
+                </thead>
+                <tbody id="tb">
+                {% for trigger in trigger_list %}
+                    <tr nid="{{ trigger.id }}">
+                        <td>
+                            <input type="checkbox" value="{{ trigger.id }}" name="check_box_list">
+                        </td>
+                        <td>{{ trigger.id }}</td>
+                        <td>{{ trigger.trigger_name }}</td>
+                        {% if trigger.enable %}
+                            <td><a href="/work/trigger_stop-{{ trigger.id }}">禁用</a></td>
+                        {% else %}
+                            <td><a href="/work/trigger_start-{{ trigger.id }}">启用</a></td>
+                        {% endif %}
+                        <td>{{ trigger.user }}</td>
+                        <td>{{ trigger.Cron }}</td>
+                        <td>{{ trigger.status }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'del_table.html' %}
+{% endblock %}
+{% block js %}
+    <script src="/static/js/del_js.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            binplDel();
+            bindDelConfirm();
+            bindDelCancel();
+            runbtn();
+            logbtn();
+            refresh();
+        });
+        var rowIds = [];
+        function bindDelConfirm() {
+            $('#delConfirm').click(function () {
+                console.log(rowIds);
+                $.ajax({
+                    url: '/work/trigger_del.html',
+                    type: 'POST',
+                    data: {'nid': rowIds},
+                    dataType: 'JSON',
+                    success: function (arg) {
+                        if (arg.status) {
+                            window.location.reload()
+                        } else if (arg.status==null){
+                        window.location.href = '/login.html';
+                    }
+                        $('#delModal').modal('hide');
+                    }
+                })
+            });
+        }
+
+        function runbtn() {
+            $('#runBtn').on('click',function () {
+                rowIds = [];
+                $("input[name='check_box_list']:checked").each(function (i) {
+                    rowIds.push($(this).val());
+                });
+                console.log(rowIds);
+                $.ajax({
+                    url: '/run_testcase.html',
+                    type: 'POST',
+                    data: {'nid': rowIds},
+                    dataType: 'JSON',
+                    success: function (arg) {
+                        if (arg.status) {
+                            window.location.href = '/run_logs.html';
+                        } else {
+                            alert(arg.mes)
+                        }
+
+                    }
+                })
+            });
+        }
+
+        function refresh() {
+            $('#refresh').on('click',function () {
+                window.location.reload();
+            });
+        }
+        function logbtn() {
+            $('#logBtn').on('click',function () {
+                $.ajax({
+                    url: '/run_logs.html',
+                    type: 'GET',
+                    success: function (arg) {
+                        if (arg.status) {
+                            console.log('222222')
+                        } else if (arg.status==null){
+                        window.location.href = '/login.html';
+                    }
+                    }
+                })
+            });
+        }
+
+        $("#project,#testcase,#p_count").change(function(){
+            var p_c = $('#p_count option:selected').text();
+            $("#p_c").attr("value",p_c);
+            document.getElementById("searchForm").submit();
+            });
+
+        window.onload=function () {
+            $.ajax({
+                    url: '/work/check_status.html',
+                    type: 'GET',
+                    success: function (arg) {
+                        if (arg.status) {
+                            console.log(arg.mes)
+                        }
+                    }
+                })
+        };
+    </script>
+{% endblock %}

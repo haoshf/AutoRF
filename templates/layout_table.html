@@ -1,0 +1,13 @@
+<a type="button" class="btn btn-primary" onclick="zj(this)">增加行</a>
+<table class="table table-bordered table-striped" id="tab">
+    <tbody id="tbody">
+        {% for table_td_list in table_tr_list %}
+            <tr class="td">
+                <td>{{ forloop.counter }}</td>
+                {% for i in table_td_list %}
+                    <td><input type="text" class="form-control input-select" value="{{ i }}"><a type="btn" onclick="add(this)">+</a><a type="btn" onclick="del(this)">-</a></td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

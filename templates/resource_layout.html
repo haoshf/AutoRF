@@ -1,0 +1,42 @@
+<div>
+    <div class="form-group">
+        <label for="detail">{{ form.project.label }}<span>{{ form.project.errors.0 }}</span></label>
+        {{ form.project }}
+    </div>
+    <div class="form-group">
+        <label for="{{ form.resource_name.label }}">{{ form.resource_name.label }}<span>{{ form.resource_name.errors.0 }}</span></label>
+        {{ form.resource_name }}
+    </div>
+    <a class="btn btn-primary" onclick="test(this)" >Settings>></a>
+    <div id="div1" style="display: block;">
+        <div class="form-group">
+            <label for="detail">{{ form.Documentation.label }}<span>{{ form.Documentation.errors.0 }}</span></label>
+            {{ form.Documentation }}
+        </div>
+    </div>
+    <div>
+        <label for="detail">{{ form.Library.label }}</label>
+        {{ form.Library }}
+        <div class="clearfloat"></div>
+    </div>
+    {% include 'resource_select.html' %}
+    <div>
+        <label for="detail">{{ form.Variables.label }}<span>{{ form.Variables.errors.0 }}</span></label>
+        {{ form.Variables }}
+    </div>
+    <div>
+        <label for="detail">{{ form.Scalar_Variables.label }}<span>{{ form.Scalar_Variables.errors.0 }}</span></label>
+        {{ form.Scalar_Variables }}
+    </div>
+    <div>
+        <label for="detail">{{ form.List_Variables.label }}<span>{{ form.List_Variables.errors.0 }}</span></label>
+        {{ form.List_Variables }}
+    </div>
+    <div>
+         <label for="detail">{{ form.Dict_Variables.label }}<span>{{ form.Dict_Variables.errors.0 }}</span></label>
+        {{ form.Dict_Variables }}
+    </div>
+    <div class="form-group">
+        <input type="submit" class="btn btn-primary" value="保 存">
+    </div>
+</div>

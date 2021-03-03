@@ -1,0 +1,226 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block styles %}
+    <style>
+        #active>li.active {
+            color: red;
+            font-size: 100px;
+        }
+    </style>
+
+{% endblock %}
+
+{% block content %}
+    <ol class="breadcrumb" style="margin-bottom: 0;">
+        <li class="active">任务列表</li>
+    </ol>
+    <div>
+        <div style="padding: 20px 0;">
+            <form method="GET" action="/work/task.html" id="searchForm" novalidate>
+                <select name="project" id="project">
+                    <option value="">全部</option>
+                    {% for project in project_list %}
+                        {% if project.id == data.project_id %}
+                            <option value="{{ project.id }}" selected>{{ project.project_name }}</option>
+                        {% else %}
+                            <option value="{{ project.id }}">{{ project.project_name }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+                <input type="search" placeholder="套件名称" name="suite_name" id="suite" value="{{ data.suite_name }}">
+                <input type="text" name="p_count" id="p_c" style="display: none">
+                <a class="btn btn-danger" id="delBtn" style="float:right">删除</a>
+                <a class="btn btn-success" style="float:right" id="refresh">启动刷新</a>
+                <a class="btn btn-success" style="float:right" id="mt_check">手动刷新</a>
+            </form>
+        </div>
+        <div>
+            <table class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                    <th><input type="checkbox" name="checkboxlist" onclick="clickDome(this);"></th>
+                    <th>ID</th>
+                    <th>任务名称</th>
+                    <th>任务内容</th>
+                    <th>任务状态</th>
+                    <th>执行人</th>
+                    <th>开始时间</th>
+                    <th>结束时间</th>
+                    <th>耗时</th>
+                    <th>详细报告</th>
+                    <th>实时日志</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody id="tb">
+                {% for task in task_list %}
+                    <tr nid="{{ task.id }}">
+                        <td>
+                            <input type="checkbox" value="{{ task.id }}" name="check_box_list">
+                        </td>
+                        <td>{{ task.id }}</td>
+                        <td>{{ task.task_name }}</td>
+                        <td>{{ task.documentation }}</td>
+                        <td>{{ task.status }}</td>
+                        <td>{{ task.user }}</td>
+                        <td>{{ task.start_time }}</td>
+                        <td>{{ task.end_time }}</td>
+                        <td>{{ task.take_time }}</td>
+                        <td>
+                            {% if task.report_path %}
+                                <a href="/look_report.html?nid={{ task.id }}">查看报告</a></td>
+                            {% endif %}
+                        <td><a href="/run_logs.html?nid={{ task.id }}">查看日志</a></td>
+                        <td>
+                            <a class="btn glyphicon glyphicon-play run-row" href="/work/rerun.html?nid={{ task.id }}"></a>
+                            <a class="btn glyphicon glyphicon-stop stop-row" href="/work/stop.html?nid={{ task.id }}"></a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="comment-list-pager">
+            <ol class="breadcrumb" id="active">
+                {{ page_str }}
+                <select id="p_count" style="right: auto">
+                    {% if p_count == 100 %}
+                        <option>10</option>
+                        <option>50</option>
+                        <option selected>100</option>
+                    {% elif p_count == 50 %}
+                        <option>10</option>
+                        <option selected>50</option>
+                        <option>100</option>
+                    {% else %}
+                        <option selected>10</option>
+                        <option>50</option>
+                        <option>100</option>
+                    {% endif %}
+                </select>
+            </ol>
+        </div>
+        {% include 'del_table.html' %}
+{% endblock %}
+{% block js %}
+    <script src="/static/js/del_js.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            binplDel();
+            bindDelConfirm();
+            bindDelCancel();
+            runbtn();
+            logbtn();
+            refresh();
+            mt_check();
+        });
+        var rowIds = [];
+        function bindDelConfirm() {
+            $('#delConfirm').click(function () {
+                console.log(rowIds);
+                $.ajax({
+                    url: '/work/task_del.html',
+                    type: 'POST',
+                    data: {'nid': rowIds},
+                    dataType: 'JSON',
+                    success: function (arg) {
+                        if (arg.status) {
+                            window.location.reload()
+                        } else if (arg.status==null){
+                            window.location.href = '/login.html';
+                        }
+                        $('#delModal').modal('hide');
+                        }
+                })
+            });
+        }
+
+        function runbtn() {
+            $('#runBtn').on('click',function () {
+                rowIds = [];
+                $("input[name='check_box_list']:checked").each(function (i) {
+                    rowIds.push($(this).val());
+                });
+                console.log(rowIds);
+                $.ajax({
+                    url: '/run_testcase.html',
+                    type: 'POST',
+                    data: {'nid': rowIds},
+                    dataType: 'JSON',
+                    success: function (arg) {
+                        if (arg.status) {
+                            window.location.href = '/run_logs.html';
+                        } else if (arg.status==null){
+                        window.location.href = '/login.html';
+                    } else {
+                            alert(arg.mes)
+                        }
+
+                    }
+                })
+            });
+        }
+
+        function refresh() {
+            $('#refresh').on('click',function () {
+                var start = $('#refresh').text();
+                $.ajax({
+                    url: '/work/check_status.html',
+                    type: 'GET',
+                    data:{'start':start},
+                    dataType:'JSON',
+                    success: function (arg) {
+                        if (arg.status) {
+                            $('#refresh').text(arg.start);
+                        } else if (arg.status==null){
+                        window.location.href = '/login.html';
+                    } else {
+                            alert(arg.mes)
+                        }
+                    }
+                })
+            });
+        }
+
+        function mt_check() {
+            $('#mt_check').on('click',function () {
+                window.location.reload();
+            });
+        }
+
+        function logbtn() {
+            $('#logBtn').on('click',function () {
+                $.ajax({
+                    url: '/run_logs.html',
+                    type: 'GET',
+                    success: function (arg) {
+                        if (arg.status) {
+                            console.log('222222')
+                        } else if (arg.status==null){
+                        window.location.href = '/login.html';
+                    }
+                    }
+                })
+            });
+        }
+
+        $("#project,#testcase,#p_count").change(function(){
+            var p_c = $('#p_count option:selected').text();
+            $("#p_c").attr("value",p_c);
+            document.getElementById("searchForm").submit();
+            });
+
+        window.onload=function () {
+            $.ajax({
+                    url: '/work/mt_check.html',
+                    type: 'GET',
+                    success: function (arg) {
+                        if (arg.status) {
+                            console.log(arg.mes)
+                        }
+                    }
+                })
+        };
+    </script>
+{% endblock %}

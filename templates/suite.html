@@ -1,0 +1,198 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+
+{% block styles %}
+    <style>
+        #active>li.active {
+            color: red;
+            font-size: 100px;
+        }
+    </style>
+
+{% endblock %}
+
+
+{% block content %}
+    {#    {{ block.super }}#}
+    <ol class="breadcrumb" style="margin-bottom: 0;">
+        <li class="active">套件列表</li>
+    </ol>
+    <div>
+        <div style="padding: 20px 0;">
+            <form id="fm1" action="/up_suite.html" method="POST" enctype="multipart/form-data" target="ifra1">
+                <a class="btn btn-primary" id="addBtn" href="/suite_add.html" {{ safe }}>添加</a>
+                <a class="btn btn-danger" id="delBtn">删除</a>
+                <iframe style="display: none" id="iframe1" name="ifra1"></iframe>
+                <input type="text" name="project" id="pro" value="" style="display: none">
+                <a class="btn btn-success">
+                    <input type="file" name="k3" multiple="" accept="*/*" onchange="uploadFile(event);" style="opacity: 0;position:absolute;width:3%;"/>上传文件
+                </a>
+                <a class="btn btn-success">
+                    <input type="text" id="filePath" name="filePath" style="display: none" value="">
+                    <input type="file" name="k3" multiple="" webkitdirectory="" accept="*/*" onchange="uploadFile(event);" style="opacity: 0;position:absolute;width:3%;"/>上传目录
+                </a>
+                <a class="btn btn-success" id="runBtn">运行</a>
+            </form>
+            <form method="GET" action="/suite.html" id="searchForm" novalidate>
+                <select name="project" id="project">
+                    <option value="">全部</option>
+                    {% for project in project_list %}
+                        {% if project.id == data.project_id %}
+                            <option value="{{ project.id }}" selected>{{ project.project_name }}</option>
+                        {% else %}
+                            <option value="{{ project.id }}">{{ project.project_name }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+                <input type="search" placeholder="套件名称" name="suite_name" id="suite" value="{{ data.suite_name }}">
+                <input type="text" name="p_count" id="p_c" style="display: none">
+            </form>
+
+        </div>
+        <div>
+            <table class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                    <th><input type="checkbox" name="checkboxlist" onclick="clickDome(this);"></th>
+                    <th>ID</th>
+                    <th>套件名称</th>
+                    <th>套件描述</th>
+                    <th>所属项目</th>
+                    <th>排序</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody id="tb">
+                {% for suite in suite_list %}
+                    <tr nid="{{ suite.id }}">
+                        <td>
+                            <input type="checkbox" value="{{ suite.id }}" name="check_box_list">
+                        </td>
+                        <td>{{ suite.id }}</td>
+                        <td>{{ suite.suite_name }}</td>
+                        <td>{{ suite.Documentation }}</td>
+                        <td>{{ suite.project.project_name }}</td>
+                        <td>{{ suite.sort }}</td>
+                        <td>
+                            <a class="btn glyphicon glyphicon-remove icon del-row"></a>
+                            <a class="btn fa fa-pencil-square-o icon edit-row"
+                               href="/suite_edit-{{ suite.id }}.html" {{ safe }}></a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="comment-list-pager">
+            <ol class="breadcrumb" id="active">
+            {{ page_str }}
+                <select id="p_count" style="right: auto">
+                    {% if p_count == 100 %}
+                        <option>10</option>
+                        <option>50</option>
+                        <option selected>100</option>
+                    {% elif p_count == 50 %}
+                        <option>10</option>
+                        <option selected>50</option>
+                        <option>100</option>
+                    {% else %}
+                        <option selected>10</option>
+                        <option>50</option>
+                        <option>100</option>
+                    {% endif %}
+                </select>
+            </ol>
+        </div>
+        {% include 'del_table.html' %}
+{% endblock %}
+{% block js %}
+    <script src="/static/js/del_js.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            bindDel();
+            binplDel();
+            bindDelConfirm();
+            bindDelCancel();
+            runbtn();
+        });
+        var rowIds = [];
+        function bindDelConfirm() {
+            $('#delConfirm').click(function () {
+                console.log(rowIds);
+                $.ajax({
+                    url: '/del_suite.html',
+                    type: 'POST',
+                    data: {'nid': rowIds},
+                    dataType: 'JSON',
+                    success: function (arg) {
+                        if (arg.status) {
+                            window.location.reload()
+                        } else if (arg.status==null){
+                        window.location.href = '/login.html';
+                    }
+                    }
+                })
+            });
+        }
+
+        function runbtn() {
+            $('#runBtn').on('click',function () {
+                rowIds = [];
+                $("input[name='check_box_list']:checked").each(function (i) {
+                    rowIds.push($(this).val());
+                });
+                console.log(rowIds);
+                $.ajax({
+                    url: '/work/run_suite.html',
+                    type: 'GET',
+                    data: {'nid': rowIds},
+                    dataType: 'JSON',
+                    success: function (arg) {
+                        if (arg.status) {
+                            window.location.href = '/work/task.html';
+                        } else if (arg.status==null){
+                        window.location.href = '/login.html';
+                        }else {
+                            alert(arg.mes)
+                        }
+                    }
+                })
+            });
+        }
+
+        $("#project,#suite,#p_count").change(function(){
+            var p_c = $('#p_count option:selected').text();
+            $("#p_c").attr("value",p_c);
+            document.getElementById("searchForm").submit();
+            });
+
+        window.onload=function () {
+            var project_id =$("#project").val();
+            console.log(project_id);
+            $("#pro").attr("value",project_id);
+            $("#project_list").click();
+        };
+
+        function uploadFile(e) {
+            document.getElementById('iframe1').onload = reloadIframe1;
+            var theFiles = e.target.files;
+            var relativePath = theFiles[0].webkitRelativePath;
+            var folder = relativePath.split("/");
+            $("#filePath").attr("value",folder[0]);
+            if($('#project option:selected').val()){
+                document.getElementById('fm1').submit();
+            }else{
+                alert('请先选择项目再进行上传！')
+            };
+        }
+        function reloadIframe1() {
+            var content = this.contentWindow.document.body.innerHTML;
+            var obj = JSON.parse(content);
+            var tag = document.createElement('img');
+            tag.src = obj.data;
+            $('#preview').empty().append(tag);
+        }
+    </script>
+{% endblock %}

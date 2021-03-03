@@ -1,0 +1,13 @@
+<div id="select">
+    <label for="detail">引用资源</label>
+    <ul class="mycss">
+        {% for resource in resource_list %}
+            {% if resource.id in rowIds %}
+                <li><label><input type="checkbox" name="Resource" value="{{ resource.id }}" checked>{{ resource.resource_name }}</label></li>
+            {% else %}
+                <li><label><input type="checkbox" name="Resource" value="{{ resource.id }}">{{ resource.resource_name }}</label></li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+    <div class="clearfloat"></div>
+</div>

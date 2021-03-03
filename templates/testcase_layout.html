@@ -1,0 +1,51 @@
+<div>
+    <div class="form-group">
+        <label for="detail">{{ form.suite.label }}<span>{{ form.suite.errors.0 }}</span></label>
+        {{ form.suite }}
+    </div>
+    <div class="form-group">
+        <label for="{{ form.testcase_name.label }}">{{ form.testcase_name.label }}<span>{{ form.testcase_name.errors.0 }}</span></label>
+        {{ form.testcase_name }}
+    </div>
+    <div class="form-group">
+        <label for="{{ form.sort.label }}">{{ form.sort.label }}<span>{{ form.sort.errors.0 }}</span></label>
+        {{ form.sort }}
+    </div>
+    <a class="btn btn-primary" onclick="test(this)">Settings>></a>
+    <div id="div1" style="display: block;">
+        <div>
+            <label for="detail">{{ form.Documentation.label }}<span>{{ form.Documentation.errors.0 }}</span></label>
+            {{ form.Documentation }}
+        </div>
+        <div>
+            <label for="detail">{{ form.Setup.label }}<span>{{ form.Setup.errors.0 }}</span></label>
+            {{ form.Setup }}
+        </div>
+        <div>
+            <label for="detail">{{ form.Teardown.label }}<span>{{ form.Teardown.errors.0 }}</span></label>
+            {{ form.Teardown }}
+        </div>
+        <div>
+            <label for="detail">{{ form.Timeout.label }}<span>{{ form.Timeout.errors.0 }}</span></label>
+            {{ form.Timeout }}
+        </div>
+        <div>
+            <label for="detail">{{ form.Template.label }}<span>{{ form.Template.errors.0 }}</span></label>
+            {{ form.Template }}
+        </div>
+        <div>
+            <label for="detail">{{ form.Tags.label }}<span>{{ form.Tags.errors.0 }}</span></label>
+            {{ form.Tags }}
+        </div>
+    </div>
+    <div>
+        <label for="detail">{{ form.Table_value.label }}<span>{{ form.Table_value.errors.0 }}</span></label>
+        {{ form.Table_value }}
+    </div>
+    <div>
+        {% include 'layout_table.html' %}
+    </div>
+    <div class="form-group">
+        <input type="submit" class="btn btn-primary" value="保 存" onclick="tb(this)">
+    </div>
+</div>

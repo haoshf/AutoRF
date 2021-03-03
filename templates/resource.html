@@ -1,0 +1,155 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+
+{% block styles %}
+    <style>
+        h2 {
+            color: red;
+        }
+    </style>
+
+{% endblock %}
+
+
+{% block content %}
+{#    {{ block.super }}#}
+    <ol class="breadcrumb" style="margin-bottom: 0;">
+        <li class="active">资源列表</li>
+    </ol>
+        <div style="padding: 20px 0;">
+            <form id="fm1" action="/up_resource.html" method="POST" enctype="multipart/form-data" target="ifra1">
+                <a class="btn btn-primary" id="addBtn" href="/resource_add.html" {{ safe }}>添加</a>
+                <a class="btn btn-danger" id="delBtn">删除</a>
+                <iframe style="display: none" id="iframe1" name="ifra1"></iframe>
+                <input type="text" name="project" id="pro" value="" style="display: none">
+                <a class="btn btn-success">
+                    <input type="file" name="k3" multiple="" accept="*/*" onchange="uploadFile();" style="opacity: 0;position:absolute;width:3%;"/>上传
+                </a>
+            </form>
+        </div>
+        <form method="GET" action="/resource.html" id="searchForm" novalidate>
+            <select name="project" id="project">
+                <option value="">全部</option>
+                {% for project in project_list %}
+                    {% if project.id == data.project_id %}
+                        <option value="{{ project.id }}" selected>{{ project.project_name }}</option>
+                    {% else %}
+                        <option value="{{ project.id }}">{{ project.project_name }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+            <input type="search" placeholder="资源名称" name="resource" id="resource" value="{{ data.resource_name }}">
+            <input type="text" name="p_count" id="p_c" style="display: none">
+        </form>
+        <div>
+            <table class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                    <th><input type="checkbox" name="checkboxlist" onclick="clickDome(this);"></th>
+                    <th>ID</th>
+                    <th>资源名称</th>
+                    <th>资源描述</th>
+                    <th>所属项目</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody id="tb">
+                {% for resource in resource_list %}
+                    <tr nid="{{ resource.id }}">
+                        <td><input type="checkbox" name="check_box_list" value="{{ resource.id }}"></td>
+                        <td>{{ resource.id }}</td>
+                        <td>{{ resource.resource_name }}</td>
+                        <td>{{ resource.Documentation }}</td>
+                        <td>{{ resource.project.project_name }}</td>
+                        <td>
+                            <a class="btn glyphicon glyphicon-remove icon del-row"></a>
+                            <a class="fa fa-pencil-square-o icon edit-row" href="/resource_edit-{{ resource.id }}.html" {{ safe }}></a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="comment-list-pager">
+            <ol class="breadcrumb" id="active">
+            {{ page_str }}
+                <select id="p_count" style="right: auto">
+                    {% if p_count == 100 %}
+                        <option>10</option>
+                        <option>50</option>
+                        <option selected>100</option>
+                    {% elif p_count == 50 %}
+                        <option>10</option>
+                        <option selected>50</option>
+                        <option>100</option>
+                    {% else %}
+                        <option selected>10</option>
+                        <option>50</option>
+                        <option>100</option>
+                    {% endif %}
+                </select>
+            </ol>
+        </div>
+        {% include 'del_table.html' %}
+{% endblock %}
+{% block js %}
+    <script src="/static/js/del_js.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            bindDel();
+            binplDel();
+            bindDelConfirm();
+            bindDelCancel();
+        });
+        var rowIds = [];
+        function bindDelConfirm() {
+            $('#delConfirm').click(function () {
+                console.log(rowIds);
+                $.ajax({
+                    url: '/del_resource.html',
+                    type: 'POST',
+                    data: {'nid': rowIds},
+                    dataType: 'JSON',
+                    success: function (arg) {
+                        if (arg.status) {
+                            window.location.reload()
+                        } else if (arg.status==null){
+                        window.location.href = '/login.html';
+                    }
+                    }
+                })
+            });
+        }
+
+        $("#project,#resource,#p_count").change(function(){
+            var p_c = $('#p_count option:selected').text();
+            $("#p_c").attr("value",p_c);
+            document.getElementById("searchForm").submit();
+            });
+
+        window.onload=function () {
+            var project_id =$("#project").val();
+            console.log(project_id);
+            $("#pro").attr("value",project_id);
+            $("#project_list").click();
+        };
+        //导入文件，触发提交表单
+        function uploadFile() {
+            document.getElementById('iframe1').onload = reloadIframe1;
+            if($('#project option:selected').val()){
+                document.getElementById('fm1').submit();
+            }else{
+                alert('请先选择项目再进行上传！')
+            }
+        }
+        function reloadIframe1() {
+            var content = this.contentWindow.document.body.innerHTML;
+            var obj = JSON.parse(content);
+            var tag = document.createElement('img');
+            tag.src = obj.data;
+            $('#preview').empty().append(tag);
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+
+{% block styles %}
+    <style>
+        h2 {
+            color: red;
+        }
+    </style>
+
+{% endblock %}
+
+{% block content %}
+    <meta http-equiv="refresh" content="5">
+    <ol class="breadcrumb" style="margin-bottom: 0;">
+        <li class="active">日志展示</li>
+    </ol>
+    <div class="easyui-layout">
+        <a class="btn btn-success" href="/api/xn_download?jmx={{ jmx }}">下载报告</a>
+        <div style="margin: 8px 0;"></div>
+        <pre>运行日志以5秒为周期，自动刷新</pre>
+        <hr />
+        <pre style="width: 100%">{{ logs }}</pre>
+    </div>
+{% endblock %}

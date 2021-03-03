@@ -1,0 +1,131 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+
+{% block styles %}
+    <style>
+        h2 {
+            color: red;
+        }
+    </style>
+
+{% endblock %}
+
+
+{% block content %}
+    {#    {{ block.super }}#}
+    <ol class="breadcrumb" style="margin-bottom: 0;">
+        <li class="active">库列表</li>
+    </ol>
+    <div>
+        <div style="padding: 20px 0;">
+            <iframe style="display: none" id="iframe1" name="ifra1"></iframe>
+            <form id="fm1" action="/up_library.html" method="POST" enctype="multipart/form-data" target="ifra1">
+                 <a class="btn btn-success">
+                    <input type="file" name="k3" multiple="" accept="*/*" onchange="uploadFile();" style="opacity: 0;position:absolute;width:3%;"/>上传
+                </a>
+                <a class="btn btn-success" id="init">初始化</a>
+                <a class="btn btn-danger" id="delBtn">删除</a>
+            </form>
+        </div>
+        <div>
+            <table class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                    <th><input type="checkbox" name="checkboxlist" onclick="clickDome(this);"></th>
+                    <th>ID</th>
+                    <th>名称</th>
+                    <th>描述</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody id="tb">
+                {% for library in library_list %}
+                    <tr nid="{{ library.id }}">
+                        <td>
+                            <input type="checkbox" value="{{ library.id }}" name="check_box_list">
+                        </td>
+                        <td>{{ library.id }}</td>
+                        <td>{{ library.library_name }}</td>
+                        <td>{{ library.documentation }}</td>
+                        <td>
+                            <a class="glyphicon glyphicon-eye-open" href="/library_detail-{{ library.id }}.html" {{ safe }}></a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        <div class="comment-list-pager">
+            <ol class="breadcrumb" id="active">
+                {{ page_str }}
+            </ol>
+        </div>
+            {% include 'del_table.html' %}
+        </div>
+{% endblock %}
+{% block js %}
+<script src="/static/js/del_js.js"></script>
+<script type="text/javascript">
+    $(function () {
+        bindDel();
+        binplDel();
+        bindDelConfirm();
+        bindDelCancel();
+        init();
+    });
+
+    function uploadFile() {
+        document.getElementById('iframe1').onload = reloadIframe1;
+        document.getElementById('fm1').submit();
+    }
+    function reloadIframe1() {
+        var content = this.contentWindow.document.body.innerHTML;
+        var obj = JSON.parse(content);
+
+        var tag = document.createElement('img');
+        tag.src = obj.data;
+        $('#preview').empty().append(tag);
+    }
+
+    var rowIds =  [];
+    function bindDelConfirm() {
+        $('#delConfirm').click(function () {
+{#                    var rowId = $('#delNid').val();#}
+            console.log(rowIds);
+            $.ajax({
+                url: '/del_library.html',
+                type: 'POST',
+                data: {'nid': rowIds},
+                dataType:'JSON',
+                success: function (arg) {
+                    if (arg.status) {
+                        let rowIdlist = rowIds;
+                        for (let i = 0; i<rowIdlist.length;i++)
+                            $('tr[nid="' + rowIdlist[i] + '"]').remove();
+                    } else if (arg.status==null){
+                        window.location.href = '/login.html';
+                    }
+                    $('#delModal').modal('hide');
+                }
+            })
+        });
+    }
+    function init() {
+        $('#init').click(function () {
+            $.ajax({
+                url: '/library_init.html',
+                type: 'GET',
+                success: function (arg) {
+                    var data = JSON.parse(arg);
+                    if (data.status) {
+                        alert(data.mes)
+                } else if (arg.status==null){
+                        window.location.href = '/login.html';
+                    }
+            }
+        });
+        });
+    }
+</script>
+{% endblock %}

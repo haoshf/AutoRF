@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+
+{% block styles %}
+    <style>
+        h2 {
+            color: red;
+        }
+    </style>
+
+{% endblock %}
+
+{% block content %}
+    <meta http-equiv="refresh" content="5">
+    <ol class="breadcrumb" style="margin-bottom: 0;">
+        <li class="active">日志展示</li>
+    </ol>
+    <div class="easyui-layout">
+        <a class="btn btn-success" id="logBtn" href="/look_report.html?nid={{ nid }}">查看报告</a>
+        <a class="btn btn-danger" id="stopBtn" href="/stop.html">停止</a>
+        <div style="margin: 8px 0;"></div>
+        <pre>运行日志以3秒为周期，自动刷新</pre>
+        <hr />
+        <pre style="width: 100%">{{ logs }}</pre>
+    </div>
+    <script type="text/javascript">
+        window.onload=function () {
+            var nid = {{ nid }};
+            $.ajax({
+                url: '/work/mt_check.html',
+                type: 'GET',
+                data: {'nid': nid},
+                dataType:'JSON',
+                success: function (arg) {
+                    if (arg.status) {
+                        window.location.href='/look_report.html?nid={{ nid }}'
+                    }
+                }
+            })
+        };
+    </script>
+{% endblock %}

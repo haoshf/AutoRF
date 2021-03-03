@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+
+{% block styles %}
+    <style>
+        h2 {
+            color: red;
+        }
+    </style>
+
+{% endblock %}
+
+
+{% block content %}
+    <ol class="breadcrumb" style="margin-bottom: 0;">
+        <li><a href="/resource.html">资源管理</a></li>
+        <li class="active">新建资源</li>
+    </ol>
+    <div style="padding: 5px 8px;">
+        <form method="POST" action="/resource_add.html" id="myForm" novalidate>
+        {% include 'resource_layout.html' %}
+        </form>
+    </div>
+{% endblock %}
+{% block js %}
+    <script src="/static/js/del_js.js"></script>
+    <script src="/static/js/layout_setting.js"></script>
+{% endblock %}

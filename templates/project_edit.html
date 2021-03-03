@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block content %}
+    <ol class="breadcrumb" style="margin-bottom: 0;">
+        <li><a href="/project.html">项目信息</a></li>
+        <li class="active">编辑项目</li>
+    </ol>
+    <div style="padding: 5px 8px;">
+        <form method="POST" action="/project_edit-{{ nid }}.html" novalidate>
+            {% include 'project_layout.html' %}
+        </form>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script src="/static/js/del_js.js"></script>
+    <script src="/static/js/layout_setting.js"></script>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block content %}
+    <ol class="breadcrumb" style="margin-bottom: 0;">
+        <li><a href="/keyword.html">关键字管理</a></li>
+        <li class="active">编辑关键字</li>
+    </ol>
+    <div style="padding: 5px 8px;">
+        <form method="POST" action="/keyword_edit-{{ nid }}.html" novalidate>
+            {% include 'keyword_layout.html' %}
+        </form>
+    </div>
+{% endblock %}
+{% block js %}
+<script src="/static/js/del_js.js"></script>
+<script src="/static/js/layout_setting.js"></script>
+{% endblock %}

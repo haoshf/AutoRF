@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <title>自动化平台</title>
+    <meta name="keywords" content="侧边导航菜单(可分组折叠)">
+    <meta name="description" content="侧边导航菜单(可分组折叠)"/>
+    <meta name="HandheldFriendly" content="True"/>
+    <link rel="shortcut icon" href="/static/imgs/favicon.ico">
+    <!-- Bootstrap3.3.5 CSS -->
+    <link href="/static/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/plugins/font-awesome/css/font-awesome.css"/>
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+{#            <script src="//cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>#}
+{#            <script src="//cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>#}
+    <![endif]-->
+    <style>
+        .panel-group {
+            max-height: 770px;
+            overflow: auto;
+        }
+
+        .leftMenu {
+            margin: 10px;
+            margin-top: 5px;
+        }
+
+        .leftMenu .panel-heading {
+            font-size: 14px;
+            padding-left: 20px;
+            height: 36px;
+            line-height: 36px;
+            color: white;
+            position: relative;
+            cursor: pointer;
+        }
+
+        /*转成手形图标*/
+        .leftMenu .panel-heading span {
+            position: absolute;
+            right: 10px;
+            top: 12px;
+        }
+
+        .leftMenu .menu-item-left {
+            padding: 2px;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 6px;
+        }
+
+        .leftMenu .menu-item-left:hover {
+            background: #C4E3F3;
+            border: 1px solid #1E90FF;
+        }
+
+        .mycss li{
+            width: 20%;
+            float: left;
+        }
+        .clearfloat{
+            clear:both;
+            height:0;
+            font-size: 1px;
+            line-height: 0px;
+        }
+        span {
+            color: red;
+        }
+        table td{
+            max-width:500px;
+            word-wrap:
+            break-word;
+            text-overflow:ellipsis;
+            white-space:nowrap;
+            overflow:hidden;
+            }
+        table td:hover{
+            white-space:normal;
+            overflow:auto;
+            }
+        {% block  styles %}
+        {% endblock %}
+    </style>
+</head>
+
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2">
+            <ul id="main-nav" class="nav nav-tabs nav-stacked" style="">
+                <li class="active">
+                    <a href="/layout.html">
+                        <i class="glyphicon glyphicon-home"></i>
+                        首页
+                    </a>
+                </li>
+                <li>
+                    <a href="#projectmes" class="nav-header collapsed" data-toggle="collapse" id="project_list">
+                        <i class="glyphicon glyphicon-credit-card"></i>
+                        项目管理
+                        <span class="pull-right glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                    <ul id="projectmes" class="nav nav-list collapse secondmenu" style="height: 0px;">
+                        <li><a href="/project.html" id="btn"><i class="glyphicon glyphicon-th-large"></i>项目信息</a></li>
+                        <li><a href="/suite.html"><i class="glyphicon glyphicon-folder-open"></i>测试套件</a></li>
+                        <li><a href="/testcase.html"><i class="glyphicon glyphicon-send"></i>测试用例</a></li>
+                        <li><a href="/resource.html"><i class="glyphicon glyphicon-registration-mark"></i>资源管理</a></li>
+                        <li><a href="/keyword.html"><i class="glyphicon glyphicon-flash"></i>关键字</a></li>
+                        <li><a href="/library.html"><i class="glyphicon glyphicon-text-width"></i>库方法</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#runner" class="nav-header collapsed" data-toggle="collapse">
+                        <i class="glyphicon glyphicon-globe"></i>
+                        运行配置
+                        <span class="label label-warning pull-right pull-right glyphicon glyphicon-chevron-down">5</span>
+                    </a>
+                    <ul id="runner" class="nav nav-list collapse secondmenu" style="height: 0px;">
+                        <li><a href="/work/task.html" id="btn"><i class="glyphicon glyphicon-th-large"></i>任务信息</a></li>
+                        <li><a href="/work/trigger.html"><i class="glyphicon glyphicon-folder-open"></i>调度管理</a></li>
+                        <li><a href="/api/jmx_list"><i class="glyphicon glyphicon-folder-open"></i>jmx管理</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="./charts.html">
+                        <i class="glyphicon glyphicon-calendar"></i>
+                        报表统计
+                    </a>
+                </li>
+                <li>
+                    <a href="#systemSetting" class="nav-header collapsed" data-toggle="collapse">
+                        <i class="glyphicon glyphicon-cog"></i>
+                        系统管理
+                        <span class="pull-right glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                    <ul id="systemSetting" class="nav nav-list collapse secondmenu" style="height: 0px;">
+                        <li><a href="mytask"><i class="glyphicon glyphicon-user"></i>用户管理</a></li>
+                        <li><a href="#"><i class="glyphicon glyphicon-th-list"></i>菜单管理</a></li>
+                        <li><a href="#"><i class="glyphicon glyphicon-asterisk"></i>角色管理</a></li>
+                        <li><a href="#"><i class="glyphicon glyphicon-edit"></i>修改密码</a></li>
+                        <li><a href="#"><i class="glyphicon glyphicon-eye-open"></i>日志查看</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="glyphicon glyphicon-fire"></i>
+                        关于系统
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="col-md-10">
+            <ul class="nav navbar-nav navbar-right">
+            {% if request.session.user_info %}
+                <li>
+                    <a href="/layout.html">{{ request.session.user_info.nickname }}</a>
+                </li>
+                <li><a style="padding-left: 0;padding-right: 0;">·</a></li>
+                <li><a href="#">管理</a></li>
+                <li><a style="padding-left: 0;padding-right: 0;">|</a></li>
+                <li><a href="/logout.html">退出</a></li>
+            {% else %}
+                <li><a href="/login.html">登陆</a></li>
+            {% endif %}
+    </ul>
+            {% block  content %}
+                <h1>WELCOME TO LOGIN</h1>
+            {% endblock %}
+        </div>
+    </div>
+</div>
+<!-- jQuery1.11.3 (necessary for Bo otstrap's JavaScript plugins) -->
+<script src="/static/js/jquery-1.12.4.js "></script>
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="/static/plugins/bootstrap/js/bootstrap.min.js "></script>
+<script charset="utf-8" src="/static/plugins/kindeditor/kindeditor-min.js"></script>
+<script charset="utf-8" src="/static/plugins/kindeditor/lang/zh_CN.js"></script>
+<link rel="stylesheet" type="text/css" href="/static/plugins/bootstrap/css/bootstrap.min.css" />
+<link rel="stylesheet" type="text/css" href="/static/plugins/bootstrap-table/dist/bootstrap-table.min.css" />
+<script src="/static/plugins/bootstrap/js/bootstrap.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/plugins/bootstrap-table/dist/bootstrap-table.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/plugins/bootstrap-table/dist/locale/bootstrap-table-zh-CN.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/js/autoline.js"></script>
+{% block js %}
+{% endblock %}
+
+<script>
+    $(function () {
+        $(".panel-heading").click(function (e) {
+            /*切换折叠指示图标*/
+            $(this).find("span").toggleClass("glyphicon-chevron-down");
+            $(this).find("span").toggleClass("glyphicon-chevron-up");
+        });
+    });
+
+    KindEditor.ready(function (K) {
+        var editor = K.create('.detail', {
+            resizeType: 2,
+            width: '100%',       // 文本框宽度(可以百分比或像素)
+            height: '100px',     // 文本框高度(只能像素)
+        });
+    });
+</script>
+</body>
+
+</html>

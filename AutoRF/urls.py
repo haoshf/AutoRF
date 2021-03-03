@@ -14,8 +14,20 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path,re_path
+from django.conf.urls import include
+# from API.views import page_not_found
+# from django.conf.urls import handler404, handler500
+# from django.views import static
+# from django.conf import settings
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # re_path(r'^static/(?P<path>.*)$', static.serve,{'document_root': settings.STATIC_ROOT}, name='static'),
+    re_path('admin/', admin.site.urls),
+    re_path(r'^work', include('Work.urls')),
+    re_path(r'^api', include('API.urls')),
+    re_path(r'', include('backend.urls')),
 ]
+
+#找不到时返回首页
+# handler404 = "API.views.page_not_found"

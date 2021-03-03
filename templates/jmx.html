@@ -1,0 +1,171 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+
+{% block styles %}
+    <style>
+        h2 {
+            color: red;
+        }
+    </style>
+
+{% endblock %}
+
+
+{% block content %}
+    {#    {{ block.super }}#}
+    <ol class="breadcrumb" style="margin-bottom: 0;">
+        <li class="active">jmx列表</li>
+    </ol>
+    <div>
+        <div style="padding: 20px 0;">
+            <iframe style="display: none" id="iframe1" name="ifra1"></iframe>
+            <form id="fm1" action="/api/up_jmx" method="POST" enctype="multipart/form-data" target="ifra1">
+                 <a class="btn btn-success">
+                    <input type="file" name="k3" multiple="" accept="*/*" onchange="uploadFile();" style="opacity: 0;position:absolute;width:3%;"/>上传
+                </a>
+            </form>
+        </div>
+        <div>
+            <table class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                    <th>名称</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody id="tb">
+                {% for jmx in jmx_list %}
+                    <tr nid="{{ jmx }}">
+                        <td>{{ jmx }}</td>
+                        <td>
+                            <a class="btn glyphicon glyphicon-eye-open" href="/api/detail-{{ jmx }}" {{ safe }}></a>
+                            <a class="btn glyphicon glyphicon-play icon cron-row"></a>
+                            <a class="btn glyphicon glyphicon-exclamation-sign" href="/api/xn_logs?jmx={{ jmx }}" {{ safe }}></a>
+                            <a class="btn glyphicon glyphicon-download-alt" href="/api/xn_download?jmx={{ jmx }}" {{ safe }}></a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        <div class="modal fade" id="eidtModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="myModalLabel">运行配置</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form id="fm" class="form-horizontal">
+                            <input type="text" name="jmx" style="display: none" id="jmx"/>
+                            <div class="form-group">
+                                <label for="cron" class="col-sm-2 control-label">线程</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" name="xiancheng" placeholder="线程">
+                                </div>
+                            <div class="form-group">
+                                <label for="cron" class="col-sm-2 control-label">运行时间</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" name="shijian" placeholder="运行时间">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <span id="errorMsg" style="color: red;"></span>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="btnEditSave">保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+            {% include 'del_table.html' %}
+        </div>
+{% endblock %}
+{% block js %}
+<script src="/static/js/del_js.js"></script>
+<script type="text/javascript">
+    $(function () {
+        bindDel();
+        binplDel();
+        bindDelConfirm();
+        bindDelCancel();
+        bindCron();
+        savaCron();
+    });
+
+    function uploadFile() {
+        document.getElementById('iframe1').onload = reloadIframe1;
+        document.getElementById('fm1').submit();
+    }
+    function reloadIframe1() {
+        var content = this.contentWindow.document.body.innerHTML;
+        var obj = JSON.parse(content);
+
+        var tag = document.createElement('img');
+        tag.src = obj.data;
+        $('#preview').empty().append(tag);
+    }
+
+    var rowIds =  [];
+    function bindDelConfirm() {
+        $('#delConfirm').click(function () {
+{#                    var rowId = $('#delNid').val();#}
+            console.log(rowIds);
+            $.ajax({
+                url: '/del_library.html',
+                type: 'POST',
+                data: {'nid': rowIds},
+                dataType:'JSON',
+                success: function (arg) {
+                    if (arg.status) {
+                        let rowIdlist = rowIds;
+                        for (let i = 0; i<rowIdlist.length;i++)
+                            $('tr[nid="' + rowIdlist[i] + '"]').remove();
+                    } else if (arg.status==null){
+                        window.location.href = '/login.html';
+                    }
+                    $('#delModal').modal('hide');
+                }
+            })
+        });
+    }
+
+        {#    点击定时  #}
+    function bindCron() {
+        $('#tb').on('click', '.cron-row', function () {
+            var jmx = $(this).parent().parent().attr('nid');
+            $('#eidtModal').modal('show');
+            $('#jmx').val(jmx);
+        })
+    }
+    function savaCron() {
+        $('#btnEditSave').click(function () {
+            var postData = {};
+            $('#eidtModal').find('input,select').each(function () {
+                var v = $(this).val();
+                var n = $(this).attr('name');
+                postData[n] = v;
+            });
+            $.ajax({
+                url: '/api/run_xn',
+                type: 'POST',
+                data: postData,
+                dataType: 'JSON',
+                success:function (arg) {
+                    if(arg.status){
+                        window.location.reload();
+                    } else if (arg.status==null){
+                        window.location.href = '/login.html';
+                    }else{
+                        alert(arg.message);
+                    }
+                }
+            })
+        })
+    }
+</script>
+{% endblock %}

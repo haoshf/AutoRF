@@ -1,0 +1,259 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+
+{% block styles %}
+    <style>
+        h2 {
+            color: red;
+        }
+        .btn {
+            position: relative;
+        }
+        .btn span{
+            display: none;
+        }
+        .btn:hover span{
+            display: block;
+            position: absolute;
+            top:20px;
+        }
+    </style>
+
+{% endblock %}
+
+
+{% block content %}
+    {#    {{ block.super }}#}
+    <ol class="breadcrumb" style="margin-bottom: 0;">
+        <li class="active">项目列表</li>
+    </ol>
+    <div>
+        <div style="padding: 20px 0;">
+            <a class="btn btn-primary" id="addBtn" href="/project_add.html" {{ safe }}>添加</a>
+            <a class="btn btn-danger" id="delBtn">删除</a>
+        </div>
+        <div>
+            <table class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>ID</th>
+                    <th>项目名称</th>
+                    <th>项目描述</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody id="tb">
+                {% for project in project_list %}
+                    <tr nid="{{ project.id }}">
+                        <td>
+                            <input type="checkbox" value="{{ project.id }}" name="check_box_list">
+                        </td>
+                        <td>{{ project.id }}</td>
+                        <td>{{ project.project_name }}</td>
+                        <td>{{ project.Documentation }}</td>
+                        <td>
+                            <a class="btn glyphicon glyphicon-remove icon del-row"><span>删除</span></a>
+                            <a class="btn fa fa-pencil-square-o icon edit-row"
+                               href="/project_edit-{{ project.id }}.html" {{ safe }}><span>编辑</span></a>
+                            <a class="btn glyphicon glyphicon-play icon run-row"><span>运行</span></a>
+                            <a class="btn glyphicon glyphicon-time icon cron-row"><span>调度</span></a>
+                            <a class="btn glyphicon glyphicon-envelope icon smtp-row" href="/project_smpt-{{ project.id }}.html" {{ safe }}><span>邮件</span></a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'del_table.html' %}
+        <!-- Modal -->
+        <div class="modal fade" id="eidtModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="myModalLabel">配置调度任务</h4>
+                    </div>
+                    <div class="modal-body">
+
+                        <form id="fm" class="form-horizontal">
+                            <input type="text" name="nid" style="display: none" />
+                            <div class="form-group">
+                                <label for="age" class="col-sm-2 control-label">项目</label>
+                                <div class="col-sm-10">
+                                    <select class="form-control" name="project_id">
+                                        {% for project in project_list %}
+                                            <option value="{{ project.id }}">{{ project.project_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="cron" class="col-sm-2 control-label">Cron</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" name="cron" placeholder="Cron">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="enable" class="col-sm-2 control-label">调度状态</label>
+                                <div class="col-sm-10">
+                                    <label class="radio-inline">
+                                        <input type="radio" name="enable" value="1"> 启用
+                                    </label>
+                                    <label class="radio-inline">
+                                        <input type="radio"  name="enable" value="0"> 禁用
+                                    </label>
+                                </div>
+                            </div>
+
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <span id="errorMsg" style="color: red;"></span>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="btnEditSave">保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+<script src="/static/js/del_js.js"></script>
+<script src="/static/js/layout_setting.js"></script>
+<script type="text/javascript">
+    $(function () {
+        bindDel();
+        binplDel();
+        bindDelConfirm();
+        bindDelCancel();
+        runbtn();
+        bindCron();
+        savaCron();
+    });
+    var rowIds =  [];
+    function bindDelConfirm() {
+        $('#delConfirm').click(function () {
+{#                    var rowId = $('#delNid').val();#}
+            console.log(rowIds);
+            $.ajax({
+                url: '/del_project.html',
+                type: 'POST',
+                data: {'nid': rowIds},
+                dataType:'JSON',
+                success: function (arg) {
+                    if (arg.status) {
+                        let rowIdlist = rowIds;
+                        for (let i = 0; i<rowIdlist.length;i++)
+                            $('tr[nid="' + rowIdlist[i] + '"]').remove();
+                    } else if (arg.status==null){
+                        window.location.href = '/login.html';
+                    }
+                    $('#delModal').modal('hide');
+                }
+            })
+        });
+    }
+
+    function runbtn() {
+        $('#tb').on('click','.run-row',function () {
+            var rowId = $(this).parent().parent().attr('nid');
+            console.log(rowId);
+            $.ajax({
+                url: '/work/run_project.html',
+                type: 'GET',
+                data: {'nid': rowId},
+                dataType: 'JSON',
+                success: function (arg) {
+                    if (arg.status) {
+                        window.location.href = '/work/task.html';
+                    } else if (arg.status==null){
+                        window.location.href = '/login.html';
+                    } else {
+                        alert(arg.mes)
+                    }
+
+                }
+            })
+        });
+}
+
+    {#    点击定时  #}
+    function bindCron() {
+        $('#tb').on('click', '.cron-row', function () {
+            var rowId = $(this).parent().parent().attr('nid');
+            $.ajax({
+                url: '/work/get_trigger',
+                type: 'GET',
+                data: {'nid': rowId},
+                dataType: 'JSON',
+                success: function (arg) {
+                    console.log(rowId);
+                    $('#eidtModal').modal('show');
+                    console.log(arg.mes);
+                    if (arg.status) {
+                        $('#eidtModal select[name="project_id"]').val(rowId);
+                        if (arg.mes) {
+                                // cls_id
+                            if (arg.mes.enable==1) {
+                                $('#eidtModal :radio[value="1"]').prop('checked', true);
+                            } else {
+                                $('#eidtModal :radio[value="0"]').prop('checked', true);
+                            };
+                            $("#eidtModal input[name='cron']").val(arg.mes.Cron)
+                        }
+                        else {
+                            $("#eidtModal input[name='cron']").val('');
+                            $('#eidtModal :radio[value="1"]').prop('checked', true);
+                        }
+                    } else if (arg.status==null){
+                        window.location.href = '/login.html';
+                    } else {
+                        alert(arg.mes)
+                    }
+                }
+            })
+
+        })
+    }
+
+    /*
+    提交调度
+    */
+    function savaCron() {
+        $('#btnEditSave').click(function () {
+            var postData = {};
+            $('#eidtModal').find('input,select').each(function () {
+                var v = $(this).val();
+                var n = $(this).attr('name');
+                if(n=='enable'){
+                    if($(this).prop('checked')){
+                        postData[n] = v;
+                    }
+                }else{
+                    postData[n] = v;
+                }
+            });
+            $.ajax({
+                url: '/work/trigger_update',
+                type: 'POST',
+                data: postData,
+                dataType: 'JSON',
+                success:function (arg) {
+                    if(arg.status){
+                        window.location.reload();
+                    } else if (arg.status==null){
+                        window.location.href = '/login.html';
+                    }else{
+                        alert(arg.message);
+                    }
+                }
+            })
+        })
+    }
+</script>
+{% endblock %}

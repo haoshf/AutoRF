@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+
+{% block styles %}
+    <style>
+        h2 {
+            color: red;
+        }
+    </style>
+
+{% endblock %}
+
+{% block content %}
+    <ol class="breadcrumb" style="margin-bottom: 0;">
+        <li><a href="/api/jmx_list">库列表</a></li>
+        <li class="active">脚本详情</li>
+    </ol>
+    <div class="easyui-layout">
+        <div style="margin: 8px 0;"></div>
+        <pre>{{ library }}脚本详情</pre>
+        <hr />
+        <pre>{{ pyfile }}</pre>
+    </div>
+{% endblock %}

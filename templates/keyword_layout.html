@@ -1,0 +1,47 @@
+<div>
+    <div class="form-group">
+        <label for="detail">{{ form.resource.label }}<span>{{ form.resource.errors.0 }}</span></label>
+        {{ form.resource }}
+    </div>
+    <div class="form-group">
+        <label for="{{ form.keyword_name.label }}">{{ form.keyword_name.label }}<span>{{ form.keyword_name.errors.0 }}</span></label>
+        {{ form.keyword_name }}
+    </div>
+    <a class="btn btn-primary" onclick="test(this)">Settings>></a>
+    <div id="div1" style="display: block;">
+        <div>
+            <label for="detail">{{ form.Documentation.label }}<span>{{ form.Documentation.errors.0 }}</span></label>
+            {{ form.Documentation }}
+        </div>
+        <div>
+            <label for="detail">{{ form.Arguments.label }}<span>{{ form.Arguments.errors.0 }}</span></label>
+            {{ form.Arguments }}
+        </div>
+        <div>
+            <label for="detail">{{ form.Teardown.label }}<span>{{ form.Teardown.errors.0 }}</span></label>
+            {{ form.Teardown }}
+        </div>
+        <div>
+            <label for="detail">{{ form.Return_Value.label }}<span>{{ form.Return_Value.errors.0 }}</span></label>
+            {{ form.Return_Value }}
+        </div>
+        <div>
+            <label for="detail">{{ form.Timeout.label }}<span>{{ form.Timeout.errors.0 }}</span></label>
+            {{ form.Timeout }}
+        </div>
+        <div>
+            <label for="detail">{{ form.Tags.label }}<span>{{ form.Tags.errors.0 }}</span></label>
+            {{ form.Tags }}
+        </div>
+    </div>
+    <div>
+        <label for="detail">{{ form.Table_value.label }}<span>{{ form.Table_value.errors.0 }}</span></label>
+        {{ form.Table_value }}
+    </div>
+    <div>
+        {% include 'layout_table.html' %}
+    </div>
+    <div class="form-group">
+        <input type="submit" class="btn btn-primary" value="保 存" onclick="tb(this)">
+    </div>
+</div>

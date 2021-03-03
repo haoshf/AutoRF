@@ -1,0 +1,166 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+
+{% block styles %}
+    <style>
+        #active>li.active {
+            color: red;
+            font-size: 100px;
+        }
+    </style>
+
+{% endblock %}
+
+
+{% block content %}
+    {#    {{ block.super }}#}
+    <ol class="breadcrumb" style="margin-bottom: 0;">
+        <li class="active">用例列表</li>
+    </ol>
+    <div>
+        <div style="padding: 20px 0;">
+            <a class="btn btn-primary" id="addBtn" href="/testcase_add.html" {{ safe }}>添加</a>
+            <a class="btn btn-danger" id="delBtn">删除</a>
+            <a class="btn btn-success" id="runBtn">运行</a>
+            <a class="btn btn-success" id="logBtn" href="/run_logs.html">报告</a>
+            <form method="GET" action="/testcase.html" id="searchForm" novalidate>
+                <select name="suite" id="suite">
+                    <option value="">全部</option>
+                    {% for suite in suite_list %}
+                        {% if suite.id == data.suite %}
+                            <option value="{{ suite.id }}" selected>{{ suite.suite_name }}</option>
+                        {% else %}
+                            <option value="{{ suite.id }}">{{ suite.suite_name }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+                <input type="search" placeholder="用例名称" name="testcase_name" id="testcase" value="{{ data.testcase_name }}">
+                <input type="text" name="p_count" id="p_c" style="display: none">
+            </form>
+        </div>
+        <div>
+            <table class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                    <th><input type="checkbox" name="checkboxlist" onclick="clickDome(this);"></th>
+                    <th>ID</th>
+                    <th>用例名称</th>
+                    <th>用例描述</th>
+                    <th>所属项目</th>
+                    <th>所属套件</th>
+                    <th>标记</th>
+                    <th>排序</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody id="tb">
+                {% for testcase in testcase_list %}
+                    <tr nid="{{ testcase.id }}">
+                        <td>
+                            <input type="checkbox" value="{{ testcase.id }}" name="check_box_list">
+                        </td>
+                        <td>{{ testcase.id }}</td>
+                        <td>{{ testcase.testcase_name }}</td>
+                        <td>{{ testcase.Documentation }}</td>
+                        <td>{{ testcase.suite.project.project_name }}</td>
+                        <td>{{ testcase.suite.suite_name }}</td>
+                        <td>{{ testcase.Tags }}</td>
+                        <td>{{ testcase.sort }}</td>
+                        <td>
+                            <a class="btn glyphicon glyphicon-remove icon del-row"></a>
+                            <a class="btn fa fa-pencil-square-o icon edit-row"
+                               href="/testcase_edit-{{ testcase.id }}.html" {{ safe }}></a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="comment-list-pager">
+            <ol class="breadcrumb" id="active">
+                {{ page_str }}
+                <select id="p_count" style="right: auto">
+                    {% if p_count == 100 %}
+                        <option>10</option>
+                        <option>50</option>
+                        <option selected>100</option>
+                    {% elif p_count == 50 %}
+                        <option>10</option>
+                        <option selected>50</option>
+                        <option>100</option>
+                    {% else %}
+                        <option selected>10</option>
+                        <option>50</option>
+                        <option>100</option>
+                    {% endif %}
+                </select>
+            </ol>
+        </div>
+        {% include 'del_table.html' %}
+{% endblock %}
+{% block js %}
+    <script src="/static/js/del_js.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            bindDel();
+            binplDel();
+            bindDelConfirm();
+            bindDelCancel();
+            runbtn();
+            logbtn();
+        });
+        var rowIds = [];
+        function bindDelConfirm() {
+            $('#delConfirm').click(function () {
+                console.log(rowIds);
+                $.ajax({
+                    url: '/del_testcase.html',
+                    type: 'POST',
+                    data: {'nid': rowIds},
+                    dataType: 'JSON',
+                    success: function (arg) {
+                        if (arg.status) {
+                            window.location.reload()
+                        } else if (arg.status==null){
+                        window.location.href = '/login.html';
+                    }
+                        $('#delModal').modal('hide');
+                    }
+                })
+            });
+        }
+
+        function runbtn() {
+            $('#runBtn').on('click',function () {
+                rowIds = [];
+                $("input[name='check_box_list']:checked").each(function (i) {
+                    rowIds.push($(this).val());
+                });
+                console.log(rowIds);
+                $.ajax({
+                    url: '/run_testcase.html',
+                    type: 'POST',
+                    data: {'nid': rowIds},
+                    dataType: 'JSON',
+                    success: function (arg) {
+                        if (arg.status) {
+                            window.location.href = '/run_logs.html';
+                        }  else {
+                            alert(arg.mes)
+                        }
+
+                    }
+                })
+            });
+        }
+
+
+        $("#suite,#testcase,#p_count").change(function(){
+            var p_c = $('#p_count option:selected').text();
+            $("#p_c").attr("value",p_c);
+            document.getElementById("searchForm").submit();
+            });
+    </script>
+{% endblock %}
