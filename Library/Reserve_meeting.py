@@ -21,7 +21,21 @@ class Reserve_meeting(object):
             '附件':'annex'
         }
         self.appTime = datetime.datetime.now().strftime('%Y-%m-%d %X')
-
+        self.new_meet={
+            '会议室': 'roomId',
+            '会议主题':'theme',
+            '会议日期':'appointmentDate',
+            '会议结束日期':'repeatEndDate',
+            '重复预定':'isRepeat',
+            '开始时间':'startTime',
+            '结束时间':'endTime',
+            '参会人':'staffList',
+            '抄送人':'recipientList',
+            '记录人':'recorderScope',
+            '指定参会人':'recorder',
+            '会议提醒':'remindTime',
+            '扫码签到':'isNeedSign',
+        }
     def add_meeting(self,staffId,**kwargs):
 
 
@@ -207,3 +221,40 @@ class Reserve_meeting(object):
                 mes['meetingReserveDo'][self.meeting[key]]=value
 
         return json.dumps(mes)
+
+
+    def save_meeting(self,detail,**kwargs):
+
+        meeting_mes = {
+            "theme": "",
+            "roomId": "",
+            "appointmentDate": "",
+            "repeatEndDate": "",
+            "startTime": "",
+            "endTime": "",
+            "isNeedSign": 0,
+            "isRepeat": 0,
+            "recipientList": [],
+            "recorderScope": "1",
+            "recorder": "",
+            "remindTime": "0",
+            "staffList": []
+        }
+
+        if detail != '':
+            for k,v in meeting_mes.items():
+                for k1,v1 in detail.items():
+                    if k == k1:
+                        meeting_mes[k]=v1
+            meeting_mes['appointmentId'] = detail['appointmentId']
+            meeting_mes['recipientList'] = detail['recipients']
+            meeting_mes['staffList'] = detail['attendees']
+            meeting_mes['isNeedSign'] = int(detail['isNeedSign'])
+            meeting_mes['isRepeat'] = int(detail['isRepeat'])
+
+        for key,value in kwargs.items():
+            meeting_mes[self.new_meet[key]]=value
+        if meeting_mes['repeatEndDate'] == '':
+            meeting_mes['repeatEndDate'] = meeting_mes['appointmentDate']
+
+        return json.dumps(meeting_mes)

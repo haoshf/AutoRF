@@ -24,7 +24,7 @@
             <a class="btn btn-primary" id="addBtn" href="/keyword_add.html" {{ safe }}>添加</a>
             <a class="btn btn-danger" id="delBtn">删除</a>
             <form method="GET" action="/keyword.html" id="searchForm" novalidate>
-                <select name="resource" id="resource">资源
+                <select name="resource" id="resource" class="selectpicker" data-live-search="true">资源
                     <option value="">全部</option>
                     {% for resource in resource_list %}
                         {% if resource.id == data.resource %}
@@ -34,7 +34,7 @@
                         {% endif %}
                     {% endfor %}
                 </select>
-                <select name="library" id="library">
+                <select name="library" id="library" class="selectpicker" data-live-search="true">
                     <option value="">全部</option>
                     {% for library in library_list %}
                         {% if library.id == data.library %}
@@ -64,39 +64,38 @@
                 </thead>
                 <tbody id="tb">
                     {% for keyword in keyword_list %}
-                        {% if keyword.keyword_name %}
-                            <tr nid="{{ keyword.id }}">
-                                <td>
-                                    <input type="checkbox" value="{{ keyword.id }}" name="check_box_list">
-                                </td>
-                                <td>{{ keyword.id }}</td>
-                                <td>{{ keyword.keyword_name }}</td>
-                                <td>{{ keyword.Documentation }}</td>
-                                <td>{{ keyword.resource.project.project_name }}</td>
-                                <td>{{ keyword.resource.resource_name }}</td>
-                                <td>{{ keyword.Tags }}</td>
-                                <td>
-                                    <a class="btn glyphicon glyphicon-remove icon del-row"></a>
-                                    <a class="btn fa fa-pencil-square-o icon edit-row"
-                                       href="/keyword_edit-{{ keyword.id }}.html" {{ safe }}></a>
-                                </td>
-                            </tr>
-                        {% else %}
-                            <tr nid="{{ keyword.id }}">
-                                <td>
-                                    <input type="checkbox" value="{{ keyword.id }}" name="check_box_list">
-                                </td>
-                                <td>{{ keyword.id }}</td>
-                                <td>{{ keyword.method_name }}</td>
-                                <td>{{ keyword.Documentation }}</td>
-                                <td>{{ keyword.library.project.project_name }}</td>
-                                <td>{{ keyword.library.library_name }}</td>
-                                <td>{{ keyword.sort }}</td>
-                                <td>
-                                    <a class="glyphicon glyphicon-remove icon del-row"></a>
-                                </td>
+                        <tr nid="{{ keyword.id }}">
+                            <td>
+                                <input type="checkbox" value="{{ keyword.id }}" name="check_box_list">
+                            </td>
+                            <td>{{ keyword.id }}</td>
+                            <td>{{ keyword.keyword_name }}</td>
+                            <td>{{ keyword.Documentation }}</td>
+                            <td>{{ keyword.resource.project.project_name }}</td>
+                            <td>{{ keyword.resource.resource_name }}</td>
+                            <td>{{ keyword.Tags }}</td>
+                            <td>
+                                <a class="btn glyphicon glyphicon-remove icon del-row"></a>
+                                <a class="btn fa fa-pencil-square-o icon edit-row"
+                                   href="/keyword_edit-{{ keyword.id }}.html" {{ safe }}></a>
+                            </td>
                         </tr>
-                        {% endif %}
+                    {% endfor %}
+                    {% for method in method_list %}
+                        <tr nid="{{ method.id }}">
+                            <td>
+                                <input type="checkbox" value="{{ method.id }}" name="check_box_list">
+                            </td>
+                            <td>{{ method.id }}</td>
+                            <td>{{ method.method_name }}</td>
+                            <td>{{ method.Documentation }}</td>
+                            <td>{{ method.library.project.project_name }}</td>
+                            <td>{{ method.library.library_name }}</td>
+                            <td>{{ method.sort }}</td>
+                            <td>
+                                <a class="glyphicon glyphicon-remove icon del-row"></a>
+                            </td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -158,6 +157,9 @@
         var p_c = $('#p_count option:selected').text();
         $("#p_c").attr("value",p_c);
         document.getElementById("searchForm").submit();
+        $('#loading').show();
+        document.getElementById('user').onload = reloadIframe;
         });
+
 </script>
 {% endblock %}

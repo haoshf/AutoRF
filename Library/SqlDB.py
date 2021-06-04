@@ -10,31 +10,19 @@ class SqlDB(object):
 
     def connect(self,env_database,*sqls):
         if env_database != '':
-            if isinstance(env_database, dict):
-                date = re.findall('(\d{4}-\d{1,2}-\d{1,2})', env_database['data']['bpInfo']['createTime'])[0].replace('-','')
-                env_database = 'bop2_bp_'+date+'_'+str(env_database['data']['bpInfo']['bpId'])
-                conn = pymysql.connect(
-                    host='49.4.68.114',
-                    user='ceshi',
-                    password='Cs@123',
-                    database='bop2_test_20191101',
-                    charset='utf8',
-                    autocommit=True
-                )
+            if env_database=='test':
+                env_database = 'boptest1'
             else:
-                if env_database=='test':
-                    env_database = 'bop2_test_20191101'
-                else:
-                    env_database = 'bop2_operate_test'
+                env_database = 'boptest1_operate'
 
-                conn = pymysql.connect(
-                    host='rm-2zehij2qv9t17w3mrqo.mysql.rds.aliyuncs.com',
-                    user='sqladmin',
-                    password='iTNnjDKU23&n',
-                    database=env_database,
-                    charset='utf8',
-                    autocommit=True
-                )
+            conn = pymysql.connect(
+                host='boptest1.mysql.test.infra.jvtd.cn',
+                user='root',
+                password='C9fH4Y6%PDtJ1V!@',
+                database=env_database,
+                charset='utf8',
+                autocommit=True
+            )
 
         else:
             conn = ''
@@ -183,5 +171,11 @@ class SqlDB(object):
     def del_kq_yy(self,env_database,id):
 
         sql = "delete From hr_att_record_census WHERE att_id='{0}';".format(id)
+        f = self.connect(env_database,sql)
+        return f
+
+    def del_role(self,env_database,role_id):
+
+        sql = "delete From bp_role WHERE role_id='{0}';".format(role_id)
         f = self.connect(env_database,sql)
         return f

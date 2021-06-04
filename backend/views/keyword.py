@@ -14,7 +14,7 @@ from ..auth.auth import check_login,check_ajax_login
 
 #关键字管理
 def keyword(request, *args, **kwargs):
-
+    print(datetime.datetime.now())
     resource_list = models.Resource.objects.all()
     library_list = models.Library.objects.all()
     keyword_name = request.GET.get('keyword_name')
@@ -27,28 +27,41 @@ def keyword(request, *args, **kwargs):
     data = {
         'keyword_name':'',
         'resource':'',
-        'library':''
+        'library':'',
+        'p_count':int(per_page_count)
     }
-    keyword_list = models.Keyword.objects
-    method_list = models.Method.objects
+    key_list = models.Keyword.objects
+    obj_list = models.Method.objects
     if keyword_name:
-        keyword_list = keyword_list.filter(keyword_name__startswith=keyword_name)
-        method_list = method_list.filter(method_name__startswith=keyword_name)
+        key_list = key_list.filter(keyword_name__startswith=keyword_name)
+        obj_list = obj_list.filter(method_name__startswith=keyword_name)
         data['keyword_name'] =keyword_name
-
     if resource:
-        keyword_list = keyword_list.filter(resource=resource)
+        key_list = key_list.filter(resource=resource)
         data['resource'] = int(resource)
+        obj_list = obj_list.filter(library=0)
     if library:
-        method_list = method_list.filter(library=library)
+        obj_list = obj_list.filter(library=library)
         data['library'] = int(library)
+        key_list = key_list.filter(resource=0)
 
-    keyword_list_1 =[ keyword for keyword in keyword_list.all()]
-    keyword_list_2 =[ keyword for keyword in method_list.all()]
-    keyword_list = keyword_list_1 + keyword_list_2
-    posts = Pagination(current_page,len(keyword_list),int(per_page_count))
+    list_count = key_list.count()+obj_list.count()
+    posts = Pagination(current_page,list_count,int(per_page_count))
     page_str = posts.page_str('keyword.html?%s&'%(urlencode(data)))
-    return render(request, 'keyword.html', {'keyword_list': keyword_list[posts.start:posts.end],'resource_list':resource_list,'library_list':library_list,'page_str':page_str,'data':data,'p_count':int(per_page_count)})
+    page_start = posts.start - key_list.count()
+    page_end = posts.end - key_list.count()
+    method_list = []
+    keyword_list = []
+    if page_start>0:
+        method_list = obj_list.all()[page_start:page_end]
+    elif page_end<0:
+        keyword_list = key_list.all()[posts.start:posts.end]
+    else:
+        keyword_list = key_list.all()[posts.start:key_list.count()]
+        method_list = obj_list.all()[:page_end]
+
+    print(datetime.datetime.now())
+    return render(request, 'keyword.html', {'keyword_list': keyword_list,'method_list':method_list,'resource_list':resource_list,'library_list':library_list,'page_str':page_str,'data':data,'p_count':int(per_page_count)})
 
 @check_login
 def keyword_add(request):
@@ -135,19 +148,28 @@ def keywords_select(request):
     try:
         resource = request.GET.get('resource')
         suite = request.GET.get('suite')
-        keyword_list = [{'keyword': '${}'},{'keyword': '@{}'},{'keyword': '&{}'},{'keyword': '${json}'},]
+        keyword_list = [{'keyword': '${}'},{'keyword': '@{}'},{'keyword': '&{}'},{'keyword': '${EMPTY}'},]
+        keywords = []
+        funcs = models.Method.objects.filter(library__class_name='BuiltIn')
         if resource:
             res = models.Resource.objects.filter(id=resource).first()
             keywords = models.Keyword.objects.filter(Q(resource__in=eval(res.Resource))|Q(resource=resource))
+            funcs = models.Method.objects.filter(library__in=eval(res.Library))
         if suite:
             sui = models.Suite.objects.filter(id=suite).first()
             keywords = models.Keyword.objects.filter(resource__in=eval(sui.Resource))
         for keyword in keywords:
-            keyword_dict = {'keyword': keyword.keyword_name}
+            keyword_dict = {'keyword': keyword.keyword_name,'arguments':keyword.Arguments,'documentation':keyword.Documentation}
             if keyword_dict not in keyword_list:
                 keyword_list.append(keyword_dict)
+        for func in funcs:
+            keyword_dict = {'keyword': func.method_name,'arguments':func.Arguments,'documentation':func.documentation}
+            if keyword_dict not in keyword_list:
+                keyword_list.append(keyword_dict)
+
         data['keyword_list'] = keyword_list
 
     except Exception:
         data['status'] =False
+
     return HttpResponse(json.dumps(data))

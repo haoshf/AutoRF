@@ -10,6 +10,7 @@
         }
     </style>
 
+
 {% endblock %}
 
 
@@ -25,12 +26,15 @@
                  <a class="btn btn-success">
                     <input type="file" name="k3" multiple="" accept="*/*" onchange="uploadFile();" style="opacity: 0;position:absolute;width:3%;"/>上传
                 </a>
+                <a class="btn btn-danger" id="delBtn">删除</a>
+                <a class="btn btn-primary" id="locu" style="float:right">启动</a>
             </form>
         </div>
         <div>
             <table class="table table-bordered table-striped">
                 <thead>
                 <tr>
+                    <th><input type="checkbox" name="checkboxlist" onclick="clickDome(this);"></th>
                     <th>名称</th>
                     <th>操作</th>
                 </tr>
@@ -38,6 +42,7 @@
                 <tbody id="tb">
                 {% for jmx in jmx_list %}
                     <tr nid="{{ jmx }}">
+                        <td><input type="checkbox" name="check_box_list" value="{{ jmx }}"></td>
                         <td>{{ jmx }}</td>
                         <td>
                             <a class="btn glyphicon glyphicon-eye-open" href="/api/detail-{{ jmx }}" {{ safe }}></a>
@@ -49,7 +54,7 @@
                 {% endfor %}
                 </tbody>
             </table>
-        <div class="modal fade" id="eidtModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+            <div class="modal fade" id="eidtModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -80,21 +85,24 @@
                     </div>
                 </div>
             </div>
+            </div>
         </div>
-
+        <div>
             {% include 'del_table.html' %}
         </div>
+    </div>
+
 {% endblock %}
 {% block js %}
 <script src="/static/js/del_js.js"></script>
 <script type="text/javascript">
     $(function () {
-        bindDel();
         binplDel();
         bindDelConfirm();
         bindDelCancel();
         bindCron();
         savaCron();
+        locu();
     });
 
     function uploadFile() {
@@ -103,20 +111,15 @@
     }
     function reloadIframe1() {
         var content = this.contentWindow.document.body.innerHTML;
-        var obj = JSON.parse(content);
-
-        var tag = document.createElement('img');
-        tag.src = obj.data;
-        $('#preview').empty().append(tag);
+        location.reload();
     }
 
     var rowIds =  [];
     function bindDelConfirm() {
         $('#delConfirm').click(function () {
-{#                    var rowId = $('#delNid').val();#}
             console.log(rowIds);
             $.ajax({
-                url: '/del_library.html',
+                url: '/api/jmx_del',
                 type: 'POST',
                 data: {'nid': rowIds},
                 dataType:'JSON',
@@ -165,6 +168,28 @@
                     }
                 }
             })
+        })
+    }
+
+    function locu() {
+        $('#locu').click(function (){
+            $.ajax({
+                    url: '/api/check_locu',
+                    type: 'GET',
+                    dataType:'JSON',
+                    success: function (arg) {
+                        if (arg.status) {
+                            window.location.href = '/api/locust_run.html';
+                        } else {
+                            var r = confirm(arg.mes);
+                            if (r==true){
+                                window.location.href = '/api/locust_run.html?status=1';
+                            } else {
+                                window.location.href = '/api/locust_run.html';
+                            }
+                        }
+                    }
+                })
         })
     }
 </script>

@@ -99,3 +99,6 @@ class Trigger(object):
 
     def add_job(self):
         return self.scheduler.add_job()
+
+    def get_job(self,id):
+        return self.scheduler.get_job(id)

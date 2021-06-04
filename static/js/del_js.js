@@ -5,18 +5,22 @@ function bindDel() {
         rowIds = [];
         var rowId = $(this).parent().parent().attr('nid');
         rowIds.push(rowId);
-    })
+    });
 }
 
 function binplDel() {
     $('#delBtn').on('click',function () {
-        $('#delModal').modal('show');
         rowIds = [];
         $("input[name='check_box_list']:checked").each(function (i) {
             rowIds.push($(this).val());
         });
-        console.log(rowIds);
-    });
+        console.log('sssssssssssssssssssss',rowIds);
+        if (rowIds.length == 0){
+            alert('请先勾选要删除的数据！')
+        } else{
+            $('#delModal').modal('show')
+        }
+        });
 }
 
 function bindDelCancel() {

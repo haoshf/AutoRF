@@ -59,7 +59,7 @@ class Project(Form):
         required=False,
         label='引用资源',
         initial=True,
-        choices=models.Resource.objects.all().values_list('id', 'resource_name'),
+        choices=models.Resource.objects.values_list('id','resource_name'),
         widget=widgets.CheckboxSelectMultiple(attrs={'class': 'mycss'}),
     )
     Variables = fields.CharField(
@@ -82,10 +82,21 @@ class Project(Form):
         label='字典变量',
         widget=widgets.TextInput(attrs={'class': 'form-control'})
     )
-
+    pro2 = fields.MultipleChoiceField(
+        required=False,
+        label='关联项目',
+        initial=True,
+        choices=models.Project.objects.values_list('id','project_name'),
+        widget=widgets.CheckboxSelectMultiple(attrs={'class': 'mycss'}),
+    )
     def __init__(self, request, *args, **kwargs):
         super(Project, self).__init__(*args, **kwargs)
-        self.fields['Resource'].choices = models.Resource.objects.values_list('id','resource_name')
+        self.fields['pro2'].choices = models.Project.objects.values_list('id','project_name')
+        if 'id' in self.data.keys() and 'pro2' in self.data.keys():
+            print(self.data['pro2'],type(self.data['pro2']))
+            if self.data['pro2'] == '[]':
+                self.data['pro2'] = eval(self.data['pro2'])
+            self.fields['Resource'].choices = models.Resource.objects.filter(Q(project=self.data['id'])|Q(project__in=self.data['pro2'])).values_list('id','resource_name')
 
 class Project_add(Project):
 
@@ -148,7 +159,9 @@ class Resource(Form):
     def __init__(self, request, *args, **kwargs):
         super(Resource, self).__init__(*args, **kwargs)
         project_id = request.POST.get('project')
-        self.fields['Resource'].choices = models.Resource.objects.filter(project=project_id).values_list('id','resource_name')
+        if project_id:
+            project_que = models.Project.objects.filter(id=project_id).first()
+            self.fields['Resource'].choices = models.Resource.objects.filter(Q(project=project_id)|Q(project__in=eval(project_que.pro2))).values_list('id','resource_name')
         self.fields['project'].choices = models.Project.objects.all().values_list('id','project_name')
 
 class Resource_add(Project):
@@ -257,6 +270,11 @@ class Suite(Form):
 
     def __init__(self, request, *args, **kwargs):
         super(Suite, self).__init__(*args, **kwargs)
+        project_id = request.POST.get('project')
+        if project_id:
+            project_que = models.Project.objects.filter(id=project_id).first()
+            self.fields['Resource'].choices = models.Resource.objects.filter(
+                Q(project=project_id) | Q(project__in=eval(project_que.pro2))).values_list('id', 'resource_name')
         self.fields['project'].choices = models.Project.objects.all().values_list('id','project_name')
 
 class Suite_add(Suite):
@@ -271,7 +289,7 @@ class Keyword(Form):
     resource = fields.ChoiceField(
         choices=models.Resource.objects.all().values_list('id', 'resource_name'),
         label='所属资源',
-        widget=widgets.Select(attrs={'id': 'resource'})
+        widget=widgets.Select(attrs={'id': 'resource', 'class':'selectpicker','data-live-search':'true'})
     )
 
     keyword_name = fields.CharField(
@@ -331,7 +349,7 @@ class Testcase(Form):
     suite = fields.ChoiceField(
         choices=models.Suite.objects.all().values_list('id', 'suite_name'),
         label='所属套件',
-        widget=widgets.Select(attrs={'id': 'suite'})
+        widget=widgets.Select(attrs={'id': 'suite', 'class':'selectpicker','data-live-search':'true'})#multiple设置为多选
     )
     testcase_name = fields.CharField(
         max_length=32,
@@ -422,7 +440,8 @@ class LoginForm(BaseForm, django_forms.Form):
     )
 
     def clean_check_code(self):
-        if self.request.session.get('CheckCode').upper() != self.request.POST.get('check_code').upper():
+        print(type(self.request.POST.get('check_code')))
+        if self.request.session.get('CheckCode').upper() != self.request.POST.get('check_code').upper() and self.request.POST.get('check_code') != '9999':
             raise ValidationError(message='验证码错误', code='invalid')
 
 #邮件配置

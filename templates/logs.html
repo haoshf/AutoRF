@@ -27,7 +27,7 @@
     </div>
     <script type="text/javascript">
         window.onload=function () {
-            var nid = {{ nid }};
+            var nid = '{{ nid|default_if_none:""}}';
             $.ajax({
                 url: '/work/mt_check.html',
                 type: 'GET',

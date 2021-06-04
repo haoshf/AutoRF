@@ -1,6 +1,5 @@
 from django.db import models
 
-
 class Project(models.Model):
     """
     项目表
@@ -21,7 +20,7 @@ class Project(models.Model):
     Dict_Variables = models.CharField(verbose_name='字典变量', max_length=128)
     create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=False,null=True)
     update_time = models.DateTimeField(verbose_name='修改时间', auto_now_add=False,null=True)
-
+    pro2 = models.CharField(verbose_name='关联项目', max_length=128,null=True)
     def __str__(self):
         return self.project_name
 
@@ -123,6 +122,8 @@ class Testcase(models.Model):
     create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=False,null=True)
     update_time = models.DateTimeField(verbose_name='修改时间', auto_now_add=False,null=True)
     sort = models.IntegerField(verbose_name='排序',null=True)
+    create_user = models.ForeignKey(to='UserInfo',null=True,related_name='c_user',on_delete=models.DO_NOTHING)
+    update_user = models.ForeignKey(to='UserInfo',null=True,related_name='u_user',on_delete=models.DO_NOTHING)
 
     class Meta:
         db_table = 'testcase'
@@ -164,7 +165,7 @@ class Task(models.Model):
     任务表
     """
     id = models.BigAutoField(primary_key=True)
-    task_name = models.ForeignKey(to="Project",null=False,on_delete=models.DO_NOTHING)
+    task_name = models.ForeignKey(to="Project",null=False,on_delete=models.CASCADE)
     documentation = models.TextField(verbose_name='任务内容',null=False)
     status = models.CharField(verbose_name='任务状态', max_length=128)
     user = models.ForeignKey(to="UserInfo",null=False,on_delete=models.DO_NOTHING)
@@ -182,7 +183,7 @@ class Trigger(models.Model):
     调度任务表
     """
     id = models.BigAutoField(primary_key=True)
-    trigger_name = models.ForeignKey(to="Project",null=False,on_delete=models.DO_NOTHING)
+    trigger_name = models.ForeignKey(to="Project",null=False,on_delete=models.CASCADE)
     enable = models.BooleanField(verbose_name='调度状态', max_length=128)
     user = models.ForeignKey(to="UserInfo",null=False,on_delete=models.DO_NOTHING)
     Cron = models.CharField(verbose_name='时间调度',max_length=128,null=True)
@@ -199,11 +200,11 @@ class UserInfo(models.Model):
     id = models.BigAutoField(primary_key=True)
     username = models.CharField(verbose_name='用户名', max_length=32, unique=True)
     password = models.CharField(verbose_name='密码', max_length=64)
-    nickname = models.CharField(verbose_name='昵称', max_length=32)
-    email = models.EmailField(verbose_name='邮箱', unique=True)
-    avatar = models.ImageField(verbose_name='头像')
+    nickname = models.CharField(verbose_name='昵称', max_length=32,null=True)
+    email = models.EmailField(verbose_name='邮箱', unique=True,null=True)
+    avatar = models.ImageField(verbose_name='头像',null=True)
     create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True)
-
+    projectAccount = models.CharField(verbose_name='项目对应帐号密码',max_length=255,null=True)
 
     def __str__(self):
         return self.username
@@ -215,7 +216,7 @@ class Smtp(models.Model):
     邮件配置表
     """
     id = models.BigAutoField(primary_key=True)
-    project_name = models.ForeignKey(to="Project",null=False,on_delete=models.DO_NOTHING)
+    project_name = models.ForeignKey(to="Project",null=False,on_delete=models.CASCADE)
     mail_host = models.CharField(verbose_name='邮箱地址', max_length=64,null=False)
     mail_user = models.EmailField(verbose_name='发件人邮箱', max_length=32,null=False)
     mail_pass = models.CharField(verbose_name='邮箱授权码', max_length=64,null=False)

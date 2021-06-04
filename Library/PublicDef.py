@@ -5,7 +5,7 @@ import json
 import random
 import datetime
 import string
-
+import pypinyin
 
 class PublicDef(object):
     def __init__(self):
@@ -321,3 +321,54 @@ class PublicDef(object):
 
         str1 = ''.join(str1)
         return str1
+
+    def pinyin(self,word):
+        s = ''
+        for p in pypinyin.pinyin(word, style=pypinyin.NORMAL):
+            s += ''.join(p)
+        return s
+
+    def should_contain_as_lower(self,str1,str2):
+
+        if str2.lower() in str1.lower():
+            return True
+        else:
+            raise ValueError('%s不包含%s'%(str1,str2))
+
+
+    def search_chatid(self,chat_dict,name):
+        """
+        找出单聊对话窗口
+        :param chat_dict:所有对话窗口字典
+        :param name1: 用户1名称
+        :param name2: 用户2名称
+        :return:
+        """
+        for pic in chat_dict:
+            print(pic)
+            pic_list = []
+            pic_dict = json.loads(pic['pic'])
+            for usermes in pic_dict:
+                try:
+                    pic_list.append(usermes['name'])
+                except Exception:
+                    pass
+            if name in pic_list and len(pic_dict)<=2:
+                return pic['chatId']
+
+        else:
+            raise ValueError('未找到窗口！')
+
+
+    def get_value(self,msg_dict,key,value):
+        """
+        获取字典是否有对应的key,有的话返回对应值否则返回定义的值
+        :param msg_dict:
+        :param key:
+        :param value:
+        :return:
+        """
+        if not msg_dict.get(key):
+            return value
+        else:
+            return msg_dict.get(key)

@@ -1,6 +1,9 @@
 # coding=utf-8
 import json
-
+from urllib.parse import urlencode
+from urllib.parse import unquote
+from bs4 import BeautifulSoup
+import copy
 
 class JsonModify(object):
     def __init__(self):
@@ -60,3 +63,55 @@ class JsonModify(object):
 
     def dump_js(self,mes):
         return json.dumps(mes, ensure_ascii=False)
+
+    def url_encode(self,data):
+        return urlencode(data)
+
+    def url_decode(self,data):
+        return unquote(data)
+
+    def soup_mes(self,html,kw):
+        soup = BeautifulSoup(html,features="lxml")
+        return soup.select(kw)[0].get_text()
+
+    def js_foo(self,L, key, value):
+        for k, v in value.items():
+            s1 = copy.copy(key)
+            s1 += '[%s]' % k
+            if isinstance(v, dict):
+                self.js_foo(L, s1, v)
+            elif isinstance(v, list):
+                for i, v1 in enumerate(v):
+                    s2 = copy.copy(s1)
+                    s2 += '[%s]' % str(i)
+                    if isinstance(v1, dict):
+                        self.js_foo(L, s2, v1)
+                    else:
+                        L[s2]=v1
+                        # string = '%s:%s' % (s2, v1)
+                        # L.append(string)
+            else:
+                L[s1] = v
+                # string = '%s:%s' % (s1, v)
+                # L.append(string)
+        return L
+
+    def json_url(self,json_data):
+        print('***请求的json***',json_data)
+        L = {}
+        for key, value in json_data.items():
+            s1 = key
+            if isinstance(value, dict):
+                self.js_foo(L, s1, value)
+            elif isinstance(value, list):
+                for i, v1 in enumerate(value):
+                    s2 = copy.copy(s1)
+                    s2 += '[%s]' % str(i)
+                    if isinstance(v1, dict):
+                        self.js_foo(L, s2, v1)
+            else:
+                L[s1] = value
+                # string = '%s:%s' % (s1, value)
+                # L.append(string)
+        # parms = '&'.join(L)
+        return L

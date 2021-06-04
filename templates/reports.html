@@ -10,11 +10,12 @@
         }
         #iframe {
             position: absolute;
-            transform: scale(.7, .7) translate(-50%, -50%);
-            width: 138%;
-            height: 2800%;
-            top: 320px;
-            left: 30%;
+            transform: scale(.6, .6) translate(0%, 0%);
+            width: 135%;
+            height: 150%;
+            top: -25%;
+            left: -9%;
+            font-size: 1.6em;
         }
     </style>
 
@@ -37,17 +38,21 @@
 {#        });#}
 
         function AjaxSubmit5() {
+            console.log(123);
             document.getElementById('iframe').onload = reloadIframe;
+            console.log(4325);
             document.getElementById('fm').submit();
         }
 
         function reloadIframe() {
+            console.log();
             // this=当前标签
             //console.log(ths);
             //console.log(ths.contentWindow);
             //console.log(ths.contentWindow.document.body.innerHTML);
             //console.log($(ths).contents().find('body').html());
             var src = this.contentWindow.document.body;
+            console.log(src);
             src.setAttribute("style", "font-size:1.5em;");
         }
             //jQuery的页面加载完成时触发的事件)

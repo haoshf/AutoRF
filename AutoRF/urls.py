@@ -16,6 +16,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path,re_path
 from django.conf.urls import include
+from django.conf.urls.static import static
+from django.conf import settings
 # from API.views import page_not_found
 # from django.conf.urls import handler404, handler500
 # from django.views import static
@@ -26,8 +28,9 @@ urlpatterns = [
     re_path('admin/', admin.site.urls),
     re_path(r'^work', include('Work.urls')),
     re_path(r'^api', include('API.urls')),
+    re_path(r'^chart', include('Chart.urls')),
     re_path(r'', include('backend.urls')),
-]
+] + static(settings.STATIC_URL,document_root = settings.STATIC_ROOT)
 
 #找不到时返回首页
 # handler404 = "API.views.page_not_found"

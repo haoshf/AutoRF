@@ -21,9 +21,12 @@ def suite(request, *args, **kwargs):
     project_list = models.Project.objects.all()
     suite_name = request.GET.get('suite_name')
     project_id = request.GET.get('project')
+    current_page = request.GET.get('p')
+    per_page_count = request.GET.get('p_count')
     data = {
         'suite_name':'',
-        'project_id':''
+        'project':'',
+        'p_count': ''
     }
     suite_list = models.Suite.objects
     if suite_name:
@@ -31,15 +34,15 @@ def suite(request, *args, **kwargs):
         data['suite_name'] =suite_name
     if project_id:
         suite_list = suite_list.filter(project=project_id)
-        data['project_id'] = int(project_id)
-    current_page = request.GET.get('p')
-    per_page_count = request.GET.get('p_count')
+        data['project'] = int(project_id)
+
     if not per_page_count:
         per_page_count=10
+    data['p_count'] = int(per_page_count)
     posts = Pagination(current_page,suite_list.count(),int(per_page_count))
     url = 'suite.html?%s&'%(urlencode(data))
     page_str = posts.page_str(url)
-    return render(request, 'suite.html', {'suite_list': suite_list.order_by('suite_name').order_by('sort').all()[posts.start:posts.end],'project_list':project_list,'page_str':page_str,'data':data,'p_count':int(per_page_count)})
+    return render(request, 'suite.html', {'suite_list': suite_list.order_by('suite_name').order_by('sort').all()[posts.start:posts.end],'project_list':project_list,'page_str':page_str,'data':data})
 
 @check_login
 def suite_add(request):
@@ -68,7 +71,7 @@ def suite_edit(request,nid):
         resource = obj.Resource
         resource_list = eval(resource)
         rowIds = [int(res) for res in resource_list]
-        pro_res = models.Resource.objects.filter(project=obj.project.id).values('id','resource_name')
+        pro_res = models.Resource.objects.filter(Q(project=obj.project.id)|Q(project__in=eval(obj.project.pro2))).values('id','resource_name')
         if resource_list != []:
             resource = models.Resource.objects.filter(id__in=resource_list).values_list('id','resource_name')
             if resource:
@@ -89,6 +92,7 @@ def suite_edit(request,nid):
             'Suite_Teardown': obj.Suite_Teardown,
             'Test_Setup': obj.Test_Setup,
             'Test_Teardown': obj.Test_Teardown,
+            'Test_Template':obj.Test_Template,
             'Force_Tags': obj.Force_Tags,
             'Default_Tags': obj.Default_Tags,
             'Library': obj.Library,
@@ -132,27 +136,33 @@ def up_suite(request):
     from types import FunctionType, MethodType
     project_id = request.POST.get('project')
     project = models.Project.objects.filter(id=project_id).first()
-    filePath = request.POST.get('filePath')
+    file_json = json.loads(request.POST.get('filePath'))
     files = request.FILES.getlist('k3')
+    print(files)
     if not os.path.exists('./robot/%s/'%project.project_name):
         os.makedirs('./robot/%s/'%project.project_name)
         os.makedirs('./robot/%s/suite'%project.project_name)
     elif not os.path.exists('./robot/%s/suite'%project.project_name):
         os.makedirs('./robot/%s/suite'%project.project_name)
-    files = request.FILES.getlist('k3')
-    print(files)
     for file in files:
         if file.name == '__init__.robot':
             continue
         else:
+            file_ = file_json[file.name].split('/')[:-1]
+            if len(file_)<2:
+                filePath = '-'.join(file_)
+            else:
+                filePath= '-'.join(file_[1:])
+            print(filePath)
             if filePath:
-                suite_sort = re.search("^\d+",filePath)
+                suite_sort = re.search("\d+",filePath)
                 if suite_sort:
                     suite_name = filePath.replace(suite_sort[0],'')+'-'+file.name[:-6]
                     sort = int(suite_sort[0])
                 else:
                     suite_name = filePath+'-'+file.name[:-6]
-                    sort = 1
+                    sort = 99
+                print('sort',sort,suite_name)
             else:
                 suite_sort = re.search("^\d+",file.name[:-6])
                 if suite_sort:
@@ -178,6 +188,7 @@ def up_suite(request):
                 'Suite_Teardown': '',
                 'Test_Setup': '',
                 'Test_Teardown': '',
+                'Test_Template':'',
                 'Force_Tags': '',
                 'Default_Tags':'',
                 'Library': [],
@@ -189,6 +200,7 @@ def up_suite(request):
                 'sort':sort,
             }
             Table_list = []
+            Variables = False
             for line in f.readlines():
                 print('--------->',line)
                 if line.startswith('*** Settings ***'):
@@ -198,36 +210,53 @@ def up_suite(request):
                 elif line.startswith('...'):
                     suite_dict['Documentation']+=line.split('    ')[-1]
                 elif line.startswith('Suite Setup'):
-                    suite_dict['Suite Setup']=line.split('    ')[1:]
+                    suite_dict['Suite_Setup']=re.split('^Suite Setup\s+',line)[-1].replace('    ','|')
                 elif line.startswith('Suite Teardown'):
-                    suite_dict['Suite Teardown'] = line.split('    ')[1:]
+                    suite_dict['Suite_Teardown'] = re.split('^Suite Teardown\s+',line)[-1].replace('    ','|')
                 elif line.startswith('Test Setup'):
-                    suite_dict['Test Setup'] = line.split('    ')[1:]
+                    suite_dict['Test_Setup'] = re.split('^Test Setup\s+',line)[-1].replace('    ','|')
                 elif line.startswith('Test Teardown'):
-                    suite_dict['Test Teardown'] = line.split('    ')[1:]
+                    suite_dict['Test_Teardown'] = re.split('^Test Teardown\s+',line)[-1].replace('    ','|')
                 elif line.startswith('Force Tags'):
-                    suite_dict['Force Tags'] = line.split('    ')[1:]
+                    suite_dict['Force_Tags'] = re.split('^Force Tags\s+',line)[-1].replace('    ','|')
                 elif line.startswith('Default Tags'):
-                    suite_dict['Default Tags'] = line.split('    ')[1:]
+                    suite_dict['Default_Tags'] = re.split('^Default Tags\s+',line)[-1].replace('    ','|')
                 elif line.startswith('Test Template'):
-                    suite_dict['Test Template'] = line.split('    ')[1:]
+                    suite_dict['Test_Template'] = re.split('^Test Template\s+',line)[-1].replace('    ','|')
                 elif line.startswith('Library'):
                     library_name = line.split(' ')[-1].split('/')[-1].replace('\n','')
                     Lib = models.Library.objects.filter(library_name=library_name).first()
                     suite_dict['Library'].append(str(Lib.id))
                 elif line.startswith('Resource'):
                     print('Resource',line.split(' ')[-1].split('/')[-1][:-7].lstrip())
-                    Lib = models.Resource.objects.filter(Q(resource_name=line.split(' ')[-1].split('/')[-1][:-7].lstrip())&Q(project=project_id)).first()
+                    Lib = models.Resource.objects.filter(Q(resource_name=line.split(' ')[-1].split('/')[-1][:-7].lstrip())&(Q(project=project_id)|Q(project__in=eval(project.pro2)))).first()
                     suite_dict['Resource'].append(str(Lib.id))
                 elif line.startswith('*** Variables ***'):
-                    suite_dict['Variables'] = line.split(' ')[-1]
+                    Variables = True
+                elif line.startswith('$') and Variables:
+                    if suite_dict['Scalar_Variables']:
+                        suite_dict['Scalar_Variables']+='|'+re.sub('\s+','=',line.strip())
+                    else:
+                        suite_dict['Scalar_Variables'] += re.sub('\s+', '=', line.strip())
+                elif line.startswith('@') and Variables:
+                    if suite_dict['List_Variables']:
+                        suite_dict['List_Variables']+='|'+re.sub('\s+','=',line.strip())
+                    else:
+                        suite_dict['List_Variables'] += re.sub('\s+', '=', line.strip())
+                elif line.startswith('&') and Variables:
+                    if suite_dict['Dict_Variables']:
+                        suite_dict['Dict_Variables']+='|'+re.sub('\s+','=',line.strip())
+                    else:
+                        suite_dict['Dict_Variables'] += re.sub('\s+', '=', line.strip())
                 elif line.startswith('*** Test Cases ***'):
+                    Variables = False
                     t = 0
                     suite = models.Suite.objects.filter(Q(suite_name=suite_name)&Q(project=project_id))
                     if suite.count():
                         suite_dict['update_time']=datetime.datetime.now()
                         suite.update(**suite_dict)
                         suite_id = suite.first()
+                        models.Testcase.objects.filter(suite=suite_id).delete()
                     else:
                         suite_id = models.Suite.objects.create(**suite_dict)
                 elif not line.startswith('   ') and not line.isspace():
@@ -255,15 +284,15 @@ def up_suite(request):
                     else:
                         Table_list += line.split('    ')[2:]
                 elif line.startswith('    [Tags]'):
-                    testcase_dict['Tags'] = line.replace('\n','').split('    ')[2:]
+                    testcase_dict['Tags'] = re.split(r'^\s+\[Tags\]\s+',line)[-1].replace('    ','|')
                 elif line.startswith('    [Setup]'):
-                    testcase_dict['Setup'] = line.replace('\n', '').split('    ')[2:]
+                    testcase_dict['Setup'] = re.split(r'^\s+\[Setup\]\s+',line)[-1].replace('    ','|')
                 elif line.startswith('    [Template]'):
-                    testcase_dict['Template'] = line.replace('\n', '').split('    ')[2:]
+                    testcase_dict['Template'] = re.split(r'^\s+\[Template\]\s+',line)[-1].replace('    ','|')
                 elif line.startswith('    [Timeout]'):
-                    testcase_dict['Timeout'] = line.replace('\n','').split('    ')[2]
+                    testcase_dict['Timeout'] = re.split(r'^\s+\[Timeout\]\s+',line)[-1].replace('    ','|')
                 elif line.startswith('    [Teardown]'):
-                    testcase_dict['Teardown'] = line.replace('\n','').split('    ')[2:]
+                    testcase_dict['Teardown'] = re.split(r'^\s+\[Teardown\]\s+',line)[-1].replace('    ','|')
 
                 elif line.startswith('    '):
                     Documentation = False

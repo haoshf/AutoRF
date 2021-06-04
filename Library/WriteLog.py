@@ -61,3 +61,40 @@ class WriteLog(object):
                     Form_mes["itemList"][i]["values"] = value
 
         return json.dumps(Form_mes)
+
+    def real_log(self,instanceId,detail,receiverList,isSendPrivateChat,**kwargs):
+
+        print('zzzzz',receiverList,isSendPrivateChat)
+        real_mes ={
+            "defineTitle": "",
+            "defineId": "",
+            "reportType": "",
+            "deadline": "",
+            "formBizData": {},
+            "isSendPrivateChat": "0",
+            "groupChatData": "",
+            "optionalRecipient": "",
+            "designatedRecipient": "",
+            "files": [],
+            "reportDate": "",
+            "instanceId":"",
+            "receiverList": []
+        }
+
+        for k,v in real_mes.items():
+            print(k)
+            for k1,v1 in detail.items():
+                if k == k1 and v1:
+                    real_mes[k]=v1
+
+        for key,value in kwargs.items():
+            for item in detail['formDefine']['list']:
+                if key == item['label']:
+                    real_mes['formBizData'][item['itemId']] = value
+
+        real_mes['receiverList']=list(receiverList)
+        real_mes['isSendPrivateChat']=isSendPrivateChat
+        if instanceId != '':
+            real_mes['instanceId'] = instanceId
+
+        return json.dumps(real_mes)

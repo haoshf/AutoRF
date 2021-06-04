@@ -17,29 +17,41 @@ from ..auth.auth import check_login,check_ajax_login
 #用例管理
 def testcase(request, *args, **kwargs):
 
-    suite_list = models.Suite.objects.all()
     testcase_name = request.GET.get('testcase_name')
     suite = request.GET.get('suite')
     current_page = request.GET.get('p')
     per_page_count = request.GET.get('p_count')
+    project_id = request.GET.get('project')
+    project_list = models.Project.objects.all()
+    suite_list = models.Suite.objects
     data = {
         'testcase_name':'',
         'suite':'',
+        'p_count': '',
+        'project':'',
     }
 
-    testcase_list = models.Testcase.objects.order_by('sort').order_by('suite__sort')
+    print(time.time())
+    testcase_list = models.Testcase.objects
     if testcase_name:
         testcase_list = testcase_list.filter(testcase_name__startswith=testcase_name)
         data['testcase_name'] =testcase_name
     if suite:
         testcase_list = testcase_list.filter(suite=suite)
         data['suite'] = int(suite)
+    if project_id:
+        suite_list = suite_list.filter(project=project_id)
+        suiteids = [suite.id for suite in suite_list]
+        testcase_list = testcase_list.filter(suite__in=suiteids)
+        data['project'] = int(project_id)
+
     if not per_page_count:
         per_page_count=10
+    data['p_count'] = per_page_count
     posts = Pagination(current_page,testcase_list.count(),int(per_page_count))
     url = 'testcase.html?%s&'%(urlencode(data))
     page_str = posts.page_str(url)
-    return render(request, 'testcase.html', {'testcase_list': testcase_list.all()[posts.start:posts.end],'suite_list':suite_list,'page_str':page_str,'data':data,'p_count':int(per_page_count)})
+    return render(request, 'testcase.html', {'testcase_list': testcase_list.all().order_by('suite__sort','sort')[posts.start:posts.end],'project_list':project_list,'suite_list':suite_list.all(),'page_str':page_str,'data':data,'p_count':int(per_page_count),'sum_count':testcase_list.count()})
 
 @check_login
 def testcase_add(request):
@@ -84,6 +96,7 @@ def testcase_edit(request,nid):
             'Timeout': obj.Timeout,
             'Tags': obj.Tags,
             'Table_value': obj.Table_value,
+            'sort': obj.sort,
         }
         Table_value = json.loads(init_dict['Table_value'])
         table_size = {'tr': [1,2,3,4,5], 'td': [1,2,3,4,5]}

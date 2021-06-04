@@ -19,13 +19,13 @@ class Runner(object):
     def run(self,work_dir):
 
         shell = False
-        if "Windows" in platform.platform():
-            argfile = work_dir + "argfile.txt"
-            print('work_dir',work_dir)
-            print('argfile',argfile)
-            command = "robot -d {0} --argumentfile {1} {0}" .format(work_dir,argfile)
-            shell = True
-        self._out_fd = open(work_dir + "getImgcode.log", "w")
+        # if "Windows" in platform.platform():
+        argfile = work_dir + "argfile.txt"
+        print('work_dir',work_dir)
+        print('argfile',argfile)
+        command = "robot -d {0} --argumentfile {1} {0}" .format(work_dir,argfile)
+        shell = True
+        self._out_fd = open(work_dir + "run.log", "w")
         self._process = subprocess.Popen(command, shell=shell, stdout=self._out_fd, stderr=subprocess.STDOUT)
         print(self._process)
         return self._process

@@ -22,7 +22,10 @@ urlpatterns = [
     re_path(r'run_xn$', views.run_xn),
     re_path(r'jmx_list$',views.jmx),
     re_path(r'up_jmx$', views.up_jmx),
+    re_path(r'jmx_del$', views.jmx_del),
     re_path(r'detail-(?P<page>\w+)',views.jmx_detail),
     re_path(r'xn_logs$', views.xn_logs),
     re_path(r'xn_download$', views.xn_download),
+    re_path(r'locust_run.html$', views.locust_run),
+    re_path(r'check_locu$',views.check_locu),
 ]

@@ -11,15 +11,19 @@ import os,codecs,platform
 from django.db.models import Q
 from urllib.parse import urlencode
 from ..auth.auth import check_login,check_ajax_login
+import re
 
 
 #资源管理
 def resource(request):
     project_id = request.GET.get('project')
     resource = request.GET.get('resource')
+    current_page = request.GET.get('p')
+    per_page_count = request.GET.get('p_count')
     data = {
-        'project_id':'',
-        'resource':''
+        'project':'',
+        'resource':'',
+        'p_count':''
     }
     project_list = models.Project.objects.all()
     resource_list = models.Resource.objects
@@ -27,16 +31,17 @@ def resource(request):
         resource_list = resource_list.filter(resource_name__startswith=resource)
         data['resource']=resource
     if project_id:
-        resource_list = resource_list.filter(project=project_id)
-        data['project_id']=int(project_id)
-    current_page = request.GET.get('p')
-    per_page_count = request.GET.get('p_count')
+        project_pro = models.Project.objects.filter(id=project_id).first()
+        resource_list = resource_list.filter(Q(project=project_id)|Q(project__in=eval(project_pro.pro2)))
+        data['project']=int(project_id)
+        print(data['project'])
     if not per_page_count:
         per_page_count=10
+    data['p_count'] = int(per_page_count)
     posts = Pagination(current_page,resource_list.count(),int(per_page_count))
     url = 'resource.html?%s&'%(urlencode(data))
     page_str = posts.page_str(url)
-    return render(request, 'resource.html', {'resource_list': resource_list.all()[posts.start:posts.end],'project_list':project_list,'page_str':page_str,'data':data,'p_count':int(per_page_count)})
+    return render(request, 'resource.html', {'resource_list': resource_list.all()[posts.start:posts.end],'project_list':project_list,'page_str':page_str,'data':data})
 
 @check_login
 def resource_add(request):
@@ -65,7 +70,7 @@ def resource_edit(request,nid):
         resource = obj.Resource
         resource_list = eval(resource)
         rowIds = [int(res) for res in resource_list]
-        pro_res = models.Resource.objects.filter(project=obj.project.id).values('id','resource_name')
+        pro_res = models.Resource.objects.filter(Q(project=obj.project.id)|Q(project__in=eval(obj.project.pro2))).values('id','resource_name')
         if resource_list != []:
             resource = models.Resource.objects.filter(id__in=resource_list).values_list('id','resource_name')
             if resource:
@@ -121,6 +126,7 @@ def del_resource(request):
 #上传资源文件入库
 @check_login
 def up_resource(request):
+    ret = {'status': True}
     from types import FunctionType, MethodType
     project_id = request.POST.get('project')
     project = models.Project.objects.filter(id=project_id).first()
@@ -132,10 +138,12 @@ def up_resource(request):
     files = request.FILES.getlist('k3')
     a = 0
     error_list = ['error']
-    while error_list!=[] or a<2:
+    while error_list!=[] and a<2:
         a+=1
+        print(a)
         error_list = []
         for file in files:
+            print(file)
             if not file.name.endswith('.robot'):
                 filepath = './robot/runCase/%s'%file.name
                 f = open(filepath, 'wb')
@@ -153,7 +161,7 @@ def up_resource(request):
                 f.close()
                 time.sleep(1)
                 f = open(filepath, 'r',encoding='utf8')
-                resource_id = models.Resource.objects.filter(Q(resource_name=file.name[:-6])&Q(project=project_id)).first()
+                resource_id = models.Resource.objects.filter(Q(resource_name=file.name[:-6])&(Q(project=project_id)|(Q(project__in=eval(project.pro2))))).first()
                 resource_dict = {
                     'project': project,
                     'resource_name': file.name[:-6],
@@ -166,6 +174,7 @@ def up_resource(request):
                     'Dict_Variables': '',
                     'create_time': datetime.datetime.now(),
                 }
+                Variables = False
                 try:
                     for line in f.readlines():
                         print('line=========',line)
@@ -178,18 +187,38 @@ def up_resource(request):
                         elif line.startswith('Library'):
                             library_name = line.split(' ')[-1].split('/')[-1].replace('\n','')
                             Lib = models.Library.objects.filter(library_name=library_name).first()
-                            resource_dict['Library'].append(str(Lib.id))
+                            resource_dict['Library'].append(Lib.id)
                         elif line.startswith('Resource'):
-                            Lib = models.Resource.objects.filter(resource_name=line.split(' ')[-1][:-7].lstrip()).first()
-                            resource_dict['Resource'].append(str(Lib.id))
-                        elif line.startswith('Variables'):
-                            resource_dict['Variables'] = line.split(' ')[-1]
+                            Lib = models.Resource.objects.filter(Q(resource_name=line.split(' ')[-1][:-7].lstrip())&Q(project=project_id)).first()
+                            if not Lib:
+                                error_list.append(str(file.name[:-6]+'---未找到依赖资源！'))
+                                break
+                            print('lib****',Lib)
+                            resource_dict['Resource'].append(Lib.id)
+                        elif line.startswith('*** Variables ***'):
+                            Variables = True
+                        elif line.startswith('$') and Variables:
+                            if resource_dict['Scalar_Variables']:
+                                resource_dict['Scalar_Variables'] += '|' + re.sub('\s+', '=', line.strip())
+                            else:
+                                resource_dict['Scalar_Variables'] += re.sub('\s+', '=', line.strip())
+                        elif line.startswith('@') and Variables:
+                            if resource_dict['List_Variables']:
+                                resource_dict['List_Variables'] += '|' + re.sub('\s+', '=', line.strip())
+                            else:
+                                resource_dict['List_Variables'] += re.sub('\s+', '=', line.strip())
+                        elif line.startswith('&') and Variables:
+                            if resource_dict['Dict_Variables']:
+                                resource_dict['Dict_Variables'] += '|' + re.sub('\s+', '=', line.strip())
+                            else:
+                                resource_dict['Dict_Variables'] += re.sub('\s+', '=', line.strip())
                         elif line.startswith('*** Keywords ***'):
                             resource = models.Resource.objects.filter(Q(resource_name=file.name[:-6]) & Q(project=project_id))
                             if resource.count():
                                 resource_dict['update_time']=datetime.datetime.now()
                                 resource.update(**resource_dict)
                                 resource_id = resource.first()
+                                models.Keyword.objects.filter(resource=resource_id).delete()
                             else:
                                 resource_id = models.Resource.objects.create(**resource_dict)
                         elif not line.startswith('   ') and not line.isspace():
@@ -199,7 +228,7 @@ def up_resource(request):
                                 'resource': resource_id,
                                 'keyword_name': line.rstrip(),
                                 'Documentation': '',
-                                'Arguments': [],
+                                'Arguments': '',
                                 'Teardown': '',
                                 'Return_Value': '',
                                 'Timeout': '',
@@ -207,26 +236,29 @@ def up_resource(request):
                                 'Table_value': '{}',
                             }
                         elif line.startswith('    [Arguments]'):
-                            keyword_dict['Arguments'] = line.replace('\n','').split('    ')[2:]
+                            spot = 'Arguments'
+                            keyword_dict['Arguments'] = re.split('^\s+\[Arguments\]\s+',line)[-1].replace('    ','|')
                         elif line.startswith('    [Documentation]'):
-                            Documentation = True
+                            spot = 'Documentation'
                             keyword_dict['Documentation'] = line.split('    ')[2:]
                         elif line.startswith('    ...'):
-                            if Documentation:
-                                keyword_dict['Documentation'] += line.split('    ')[2:]
+                            if spot=='Arguments':
+                                keyword_dict[spot] += '|'+re.split('^\s+\.\.\.\s+',line)[-1].replace('    ','|')
+                            elif spot=='Documentation':
+                                keyword_dict[spot] += line.split('    ')[2:]
                             else:
                                 Table_list += line.split('    ')[2:]
                         elif line.startswith('    [Tags]'):
-                            keyword_dict['Tags'] = line.replace('\n','').split('    ')[2:]
+                            keyword_dict['Tags'] = re.split('^\s+\[Tags\]\s+',line)[-1].replace('    ','|')
                         elif line.startswith('    [Timeout]   '):
-                            keyword_dict['Timeout'] = line.replace('\n','').split('    ')[2]
+                            keyword_dict['Timeout'] = re.split('^\s+\[Timeout\]\s+',line)[-1].replace('    ','|')
                         elif line.startswith('    [Teardown]'):
-                            keyword_dict['Teardown'] = line.replace('\n','').split('    ')[2:]
+                            keyword_dict['Teardown'] = re.split('^\s+\[Teardown\]\s+',line)[-1].replace('    ','|')
                         elif line.startswith('    [Return]'):
-                            keyword_dict['Return_Value'] = line.replace('\n','').split('    ')[2:]
+                            keyword_dict['Return_Value'] = re.split('^\s+\[Return\]\s+',line)[-1].replace('    ','|')
 
                         elif line.startswith('    '):
-                            Documentation = False
+                            spot = False
                             if Table_list != []:
                                 for j, value in enumerate(Table_list):
                                     k = str(i) + '-' + str(j + 1)
@@ -242,7 +274,6 @@ def up_resource(request):
                                 i += 1
                                 keyword_dict['Table_value']=json.dumps(Table_value)
                                 keyword_dict['Documentation']=''.join(keyword_dict['Documentation'])
-                                print('Table_value1------------------>', Table_value)
                                 keyword = models.Keyword.objects.filter(Q(keyword_name=keyword_dict['keyword_name']) & Q(resource=resource_id))
                                 if keyword.count():
                                     keyword_dict['update_time'] = datetime.datetime.now()
@@ -269,8 +300,11 @@ def up_resource(request):
                         Table_list = []
                 except Exception as f:
                     error_list.append(f)
-    print('导入完毕！')
-    return HttpResponse(error_list)
+    if error_list!=[]:
+        ret = {'status': False,'error':error_list}
+
+    return HttpResponse(json.dumps(ret))
+
 
 #查询操作
 @check_login
@@ -278,5 +312,6 @@ def resource_select(request):
     project = request.GET.get('project')
     rowIds = request.GET.getlist('rowIds[]')
     rowIds = [int(row) for row in rowIds]
-    resource_list = models.Resource.objects.filter(project=project).all()
+    project_pro = models.Project.objects.filter(id=project).first()
+    resource_list = models.Resource.objects.filter(Q(project=project) | Q(project__in=eval(project_pro.pro2))).all()
     return render(request,'resource_select.html',{'resource_list':resource_list,'rowIds':rowIds})

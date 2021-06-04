@@ -8,124 +8,119 @@ import traceback
 import os
 from urllib3 import encode_multipart_formdata
 from requests.auth import AuthBase
-from JsonModify import JsonModify
+from urllib.parse import urlencode
 # f = os.path.dirname(__file__)
 # work = os.path.dirname(os.path.dirname(f))
 # os.chdir(work)
 
 class SendRequests(object):
     def __init__(self):
-        self.cookiestr = ''
+        self.session = requests.session()
 
     def post_with_header(self, data, url, *header):
 
-        headers = JsonModify().update_json('{}',*header)
-        print('*******url：******:%s' % (url))
-        print('*******请求头：******:%s' % (headers))
-        print('*******请求参数：******:%s' % (data))
-        headers = json.loads(headers)
+        jsonStr = 'headers'
+        headers = {}
+        for parameter in header:
+            print(jsonStr + parameter)
+            try:
+                exec(jsonStr + parameter)
+            except:
+                print('Expression execute failed![',jsonStr + parameter,']')
 
+        # headers = JsonModify().update_json('{}',*header)
+        # headers = json.loads(headers)
+        print('*******url：******:%s' % (url))
+        print('*******请求参数：******:%s' % (data))
         #请求为列表时，处理
         if isinstance(data,list):
             if isinstance(data,dict):
                 data = [json.loads(js) for js in data]
-            # else:
-            #     print('*******请求参数：******:%s' % (data))
-            #     resultObj = requests.post(url, headers = headers, json = data).text
-            #     print("*******运行结果：********", resultObj)
-            #     return json.loads(resultObj)
         else:
             if data != '':
-                data = json.loads(data)
-
-        if headers.__len__() == 0:
-            r = requests.post(url, json = data,verify=False)
-            resultObj = r.text
+                try:
+                    data = json.loads(data)
+                except Exception:
+                    pass
+        try:
+            if 'application/json' in headers.values():
+                r = self.session.post(url, headers = headers, json = data)
+            else:
+                r = self.session.post(url, headers = headers, data = data)
+        except:
+            traceback.print_exc()
+            raise
+        resultObj = r.text
+        print("*******运行结果：********", resultObj)
+        try:
             return json.loads(resultObj)
-        else:
-            try:
-                r = requests.post(url, headers = headers, json = data)
-            except:
-                traceback.print_exc()
-                raise
-            resultObj = r.text
-            print("*******运行结果：********", resultObj)
-            return json.loads(resultObj)
-
-    def append_thing(self, parameter):
-        if (parameter.find('.append') != -1 & parameter.find(": ''") != -1):
-            return False
-        else:
-            return True
-
-    def base64_conversion(self, pwd):
-        print(pwd,type(pwd))
-        pwd = base64.b64encode(pwd.encode('utf-8'))# 密码
-        return pwd
+        except Exception:
+            return resultObj
 
     def get_with_header(self, url, *header):
-        headers = {}
-        strDict = 'headers'
-        # headers['Cookie'] = self.cookiestr
-        for parameter in header:
-            exec (strDict + parameter)
-        if headers.__len__() == 0:
-            r = requests.get(url)
-            resultObj = r.text
-            return json.loads(resultObj)
-        else:
-            try:
-                r = requests.get(url, headers = headers)
-            except:
-                traceback.print_exc()
-                raise
-            resultObj = r.text
-            print('url',url)
-            print('headers',headers)
-            print("*******运行结果：********", resultObj)
-            try:
-                return json.loads(resultObj)
-            except Exception:
-                return resultObj
 
-    def upload_with_header(self, data, url, filename,filepath,*header):
+        jsonStr = 'headers'
         headers = {}
-        strDict = 'headers'
         for parameter in header:
-            exec (strDict + parameter)
+            print(jsonStr + parameter)
+            try:
+                exec(jsonStr + parameter)
+            except:
+                print('Expression execute failed![',jsonStr + parameter,']')
+
+        try:
+            r = self.session.get(url, headers = headers)
+        except:
+            traceback.print_exc()
+            raise
+        resultObj = r.text
+        print('url',url)
+        print('headers',headers)
+        print("*******运行结果：********", resultObj)
+        try:
+            return json.loads(resultObj)
+        except Exception:
+            return resultObj
+
+    def upload_with_header(self, data, url,file, filename,filepath,*header):
+        jsonStr = 'headers'
+        headers = {}
+        for parameter in header:
+            print(jsonStr + parameter)
+            try:
+                exec(jsonStr + parameter)
+            except:
+                print('Expression execute failed![',jsonStr + parameter,']')
         data = json.loads(data)
-        data['file'] = (filename, open(filepath, 'rb').read())
+        data[file] = (filename, open(filepath, 'rb').read())
         encode_data = encode_multipart_formdata(data)
         data = encode_data[0]
         headers['Content-Type'] = encode_data[1]
 
-        if headers.__len__() == 0:
-            r = requests.post(url, data = data)
-            resultObj = r.text
-            return json.loads(resultObj)
-        else:
-            print('*******请求参数：******:%s' % (data))
-            try:
-                r = requests.post(url, headers = headers, data = data)
-            except:
-                traceback.print_exc()
-                raise
-            resultObj = r.text
-            print("*******运行结果：********", resultObj)
-            return json.loads(resultObj)
 
-    def Auth(self, url,username,password):
-
-        r = requests.post(url,auth=(username,password))
-        return json.loads(r.text)
+        print('*******请求参数：******:%s' % (data))
+        try:
+            r = self.session.post(url, headers = headers, data = data)
+        except:
+            traceback.print_exc()
+            raise
+        resultObj = r.text
+        print("*******运行结果：********", resultObj)
+        return json.loads(resultObj)
 
     def download_with_header(self, data, url,filepath, *header):
         print('*******url：******:%s' % (url))
         print('*******请求参数：******:%s' % (data))
-        headers = JsonModify().update_json('{}',*header)
-        headers = json.loads(headers)
+        jsonStr = 'headers'
+        headers = {}
+        for parameter in header:
+            print(jsonStr + parameter)
+            try:
+                exec(jsonStr + parameter)
+            except:
+                print('Expression execute failed![',jsonStr + parameter,']')
         if data == '':
-            r = requests.get(url, headers=headers)
+            r = self.session.get(url, headers=headers)
         else:
             # 请求为列表时，处理
             if isinstance(data,list):
@@ -134,7 +129,7 @@ class SendRequests(object):
             else:
                 data = json.loads(data)
             try:
-                r = requests.post(url, headers=headers, json=data)
+                r = self.session.post(url, headers=headers, json=data)
             except:
                 traceback.print_exc()
                 raise

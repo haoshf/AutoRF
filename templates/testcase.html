@@ -26,7 +26,17 @@
             <a class="btn btn-success" id="runBtn">运行</a>
             <a class="btn btn-success" id="logBtn" href="/run_logs.html">报告</a>
             <form method="GET" action="/testcase.html" id="searchForm" novalidate>
-                <select name="suite" id="suite">
+                <select name="project" id="project">
+                    <option value="">全部</option>
+                    {% for project in project_list %}
+                        {% if project.id == data.project %}
+                            <option value="{{ project.id }}" selected>{{ project.project_name }}</option>
+                        {% else %}
+                            <option value="{{ project.id }}">{{ project.project_name }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+                <select name="suite" id="suite" class="selectpicker" data-live-search="true">
                     <option value="">全部</option>
                     {% for suite in suite_list %}
                         {% if suite.id == data.suite %}
@@ -96,6 +106,7 @@
                         <option>100</option>
                     {% endif %}
                 </select>
+                <li style="float:right">总计：{{ sum_count }}条</li>
             </ol>
         </div>
         {% include 'del_table.html' %}
@@ -109,7 +120,6 @@
             bindDelConfirm();
             bindDelCancel();
             runbtn();
-            logbtn();
         });
         var rowIds = [];
         function bindDelConfirm() {
@@ -156,11 +166,12 @@
             });
         }
 
-
-        $("#suite,#testcase,#p_count").change(function(){
+        $("#project,#suite,#testcase,#p_count").change(function(){
             var p_c = $('#p_count option:selected').text();
             $("#p_c").attr("value",p_c);
             document.getElementById("searchForm").submit();
+            $('#loading').show();
+            document.getElementById('user').onload = reloadIframe;
             });
     </script>
 {% endblock %}

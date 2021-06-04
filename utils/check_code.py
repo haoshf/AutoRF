@@ -3,6 +3,7 @@
 
 import random
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
+import platform
 
 _letter_cases = "abcdefghjkmnpqrstuvwxy"  # 小写字母，去除可能干扰的i，l，o，z
 _upper_cases = _letter_cases.upper()  # 大写字母
@@ -46,6 +47,8 @@ def create_validate_code(size=(120, 30),
     # 创建图形
     img = Image.new(mode, size, bg_color)
     draw = ImageDraw.Draw(img)  # 创建画笔
+    if 'Linux' in platform.platform():
+        font_type='/usr/share/fonts/dejavu/DejaVuSans.ttf'
 
     def get_chars():
         """生成给定长度的字符串，返回列表格式"""

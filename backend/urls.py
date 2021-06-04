@@ -13,11 +13,9 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
-from django.urls import path,re_path
-from django.conf.urls import include
+from django.urls import re_path
 
-from .views import project,layout,resource,suite,testcase,keyword,library,runner,account
+from .views import project, layout, resource, suite, testcase, keyword, library, runner, account
 urlpatterns = [
     re_path(r'^logout.html$', account.logout),
     re_path(r'^check_code.html$', account.check_code),
@@ -47,7 +45,7 @@ urlpatterns = [
     re_path(r'keyword_add.html$', keyword.keyword_add),
     re_path(r'keyword_edit-(\d+).html$', keyword.keyword_edit),
     re_path(r'^del_keyword.html$', keyword.del_keyword),
-    re_path(r'^keywords_select.html$', keyword.keywords_select),
+    re_path(r'^keywords_select$', keyword.keywords_select),
     re_path(r'^library.html$', library.library),
     re_path(r'^up_library.html$', library.up_library),
     re_path(r'^library_detail-(\d+).html$',library.library_detail),
@@ -60,5 +58,7 @@ urlpatterns = [
     re_path(r'^report.html$', runner.reportpage),
     re_path(r'^log.html$', runner.logpage),
     re_path(r'project_smpt-(\d+).html$', project.project_smpt),
+    re_path(r'get_userinfo$', account.get_userinfo),
+    re_path(r'saveUserInfo', account.saveUserInfo),
 ]
 

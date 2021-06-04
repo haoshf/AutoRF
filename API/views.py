@@ -16,6 +16,7 @@ import subprocess
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.http import StreamingHttpResponse
 from django.utils.encoding import escape_uri_path
+import psutil,signal
 
 #库管理
 def jmx(request):
@@ -69,7 +70,10 @@ def run_xn(request):
         xiancheng = request.POST.get('xiancheng')
         shijian = request.POST.get('shijian')
         print(jmx,xiancheng,shijian)
-        command = "./JmeterFile/start.sh {0} {1} {2}" .format(jmx,xiancheng,shijian)
+        if 'Linux' in platform.platform():
+            command = "./JmeterFile/start.sh {0} {1} {2}" .format(jmx,xiancheng,shijian)
+        else:
+            command = "./JmeterFile/start.sh {0} {1} {2}" .format(jmx,xiancheng,shijian)
         shell = True
         _out_fd = open("./JmeterFile/%s.log"%jmx[:-4], "w")
         process = subprocess.Popen(command, shell=shell, stdout=_out_fd, stderr=subprocess.STDOUT)
@@ -102,8 +106,16 @@ def xn_logs(request):
 def xn_download(request):
     jmx = request.GET.get('jmx')
     file_path = "./JmeterFile/%s.zip"%jmx[:-4]
-    if not os.path.exists(file_path):
-        return HttpResponse("Sorry but Not Found the File")
+    import re
+    r = re.compile(r'\w*%s\w*\.zip$'%jmx[:-4])
+    for root, dirs, files in os.walk('./JmeterFile'):
+        l = [x for x in files if r.match(x)]
+        if l==[]:
+            return HttpResponse("Sorry but Not Found the File")
+        else:
+            file_path ="./JmeterFile/%s"%l[0]
+            print('-----------------',file_path)
+            break
 
     def file_iterator(file_path, chunk_size=512):
         """
@@ -131,3 +143,54 @@ def xn_download(request):
     except:
         return HttpResponse("Sorry but Not Found the File")
     return response
+
+def jmx_del(request):
+    ret = {'status': True}
+    try:
+        nid = request.POST.getlist('nid[]')
+        print('nid',nid)
+        for file in nid:
+            os.remove('./JmeterFile/%s'%file)
+    except Exception as e:
+        ret['status'] = False
+
+    return HttpResponse(json.dumps(ret))
+
+
+def check_locu(request):
+
+    ret = {'status': False, 'mes': False}
+    net_con = psutil.net_connections()
+    for con_info in net_con:
+        if con_info.laddr.port == 8080:
+            print('.............', con_info.laddr.port)
+            ret['mes'] = '正在运行中,是否重新运行？'
+            return HttpResponse(json.dumps(ret))
+    else:
+        ret['status'] = True
+        return HttpResponse(json.dumps(ret))
+
+def locust_run(request):
+
+    ret = {'status': False, 'mes': False}
+    host = request.get_host().split(':')[0]
+    print('??????',host)
+    ret['host'] = host
+    try:
+        if request.GET.get('status')=='1':
+            net_con = psutil.net_connections()
+            for con_info in net_con:
+                if con_info.laddr.port == 8080:
+                    print('.............', con_info.laddr.port)
+                    os.popen("taskkill -pid %s -f" % con_info.pid)
+                    return redirect('/api/locust_run.html')
+        command = "locust -f ./utils/day2.py --host=https://boptest1.jvtdtest.top --web-host=0.0.0.0 -P 8080"
+        shell = True
+        _out_fd = open("locust.log", "w")
+        process = subprocess.Popen(command, shell=shell, stdout=_out_fd, stderr=subprocess.STDOUT)
+        ret['status'] = True
+        time.sleep(2)
+    except Exception as e:
+        print(e, type(e))
+        ret['mes'] = str(e)
+    return render(request,'locust_layout.html',{'ret':ret})

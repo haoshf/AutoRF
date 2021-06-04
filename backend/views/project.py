@@ -18,9 +18,9 @@ def project(request):
 def project_add(request):
 
     if request.method == 'GET':
-        form = Project_add(request=request)
+        form = Project(request=request)
     else:
-        form = Project_add(request=request,data=request.POST)
+        form = Project(request=request,data=request.POST)
         if form.is_valid():
             dic = {}
             dic['create_time'] = datetime.datetime.now()
@@ -49,6 +49,13 @@ def project_edit(request,nid):
             library = models.Library.objects.filter(id__in=library_list).values_list('id','library_name')
             if library:
                 library = list(zip(*library))[0]
+
+        pro2 = obj.pro2
+        pro2_list = eval(pro2)
+        if pro2_list != [] and pro2_list:
+            pro2 = models.Project.objects.filter(id__in=pro2_list).values_list('id','project_name')
+            if pro2:
+                pro2 = list(zip(*pro2))[0]
         init_dict = {
             'id': obj.id,
             'project_name': obj.project_name,
@@ -64,22 +71,25 @@ def project_edit(request,nid):
             'Scalar_Variables':obj.Scalar_Variables,
             'List_Variables': obj.List_Variables,
             'Dict_Variables': obj.Dict_Variables,
+            'pro2':pro2,
         }
         form = Project(request=request, data=init_dict)
         return render(request, 'project_edit.html', {'form': form, 'nid': nid})
     else:
         form = Project(request=request, data=request.POST)
-
         if form.is_valid():
+            print('////////////')
             if form.cleaned_data['project_name'] != obj.project_name:
                 form = Project_add(request=request, data=request.POST)
             if form.is_valid():
+                print('?????????????')
                 dic = {}
                 dic['update_time'] = datetime.datetime.now()
                 dic.update(form.cleaned_data)
                 models.Project.objects.filter(id=nid).update(**dic)
-                if dic['project_name'] != obj.project_name and os.path.exists('./robot/%s/'%obj.project_name):
-                    os.rename('./robot/%s/'%obj.project_name,'./robot/%s/'%dic['project_name'])
+                # if dic['project_name'] != obj.project_name and os.path.exists('./robot/%s/'%obj.project_name):
+                #     os.rename('./robot/%s/'%obj.project_name,'./robot/%s/'%dic['project_name'])
+                print('?????????????')
                 return redirect('/project.html')
     return render(request, 'project_edit.html',{'form':form, 'nid': nid})
 

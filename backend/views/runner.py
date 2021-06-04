@@ -49,10 +49,10 @@ def run_logs(request):
     nid = request.GET.get('nid')
     user = request.session.get('user_info')
     if not nid:
-        log_path = os.getcwd().replace("\\", "/") + "/robot/%s/getImgcode.log"%user['id']
+        log_path = os.getcwd().replace("\\", "/") + "/robot/%s/run.log"%user['id']
     else:
         task = models.Task.objects.filter(id=nid).first()
-        log_path = os.getcwd().replace('\\','/') + task.log_path+"getImgcode.log"
+        log_path = os.getcwd().replace('\\','/') + task.log_path+"run.log"
 
     logs = "还没捕获到日志信息^_^"
     if os.path.exists(log_path):

@@ -28,6 +28,10 @@
                 <a class="btn btn-success" id="init">初始化</a>
                 <a class="btn btn-danger" id="delBtn">删除</a>
             </form>
+            <form method="GET" action="/library.html" id="searchForm" novalidate>
+                <input type="search" placeholder="库名称" name="library_name" id="library" value="{{ data.library_name }}">
+                <input type="text" name="p_count" id="p_c" style="display: none">
+            </form>
         </div>
         <div>
             <table class="table table-bordered table-striped">
@@ -59,6 +63,21 @@
         <div class="comment-list-pager">
             <ol class="breadcrumb" id="active">
                 {{ page_str }}
+                <select id="p_count" style="right: auto">
+                    {% if data.p_count == 100 %}
+                        <option>10</option>
+                        <option>50</option>
+                        <option selected>100</option>
+                    {% elif data.p_count == 50 %}
+                        <option>10</option>
+                        <option selected>50</option>
+                        <option>100</option>
+                    {% else %}
+                        <option selected>10</option>
+                        <option>50</option>
+                        <option>100</option>
+                    {% endif %}
+                </select>
             </ol>
         </div>
             {% include 'del_table.html' %}
@@ -127,5 +146,13 @@
         });
         });
     }
+
+    $("#library,#p_count").change(function(){
+        var p_c = $('#p_count option:selected').text();
+        $("#p_c").attr("value",p_c);
+        document.getElementById("searchForm").submit();
+        $('#loading').show();
+        document.getElementById('user').onload = reloadIframe;
+        });
 </script>
 {% endblock %}

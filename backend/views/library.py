@@ -12,6 +12,7 @@ from inspect import signature
 from utils import parser
 from urllib.parse import urlencode
 from ..auth.auth import check_login,check_ajax_login
+from django.db.models import Q
 
 #库管理
 def library(request, *args, **kwargs):
@@ -20,15 +21,21 @@ def library(request, *args, **kwargs):
     data = {
         'library_name':'',
     }
-    library_list = models.Library.objects
+    if library_name:
+        library_list = models.Library.objects.filter(~Q(library_name='SqlDB.py')&Q(library_name__startswith=library_name))
+        data['library_name'] =library_name
+    else:
+        library_list = models.Library.objects.filter(~Q(library_name='SqlDB.py'))
     current_page = request.GET.get('p')
     per_page_count = request.GET.get('p_count')
     if not per_page_count:
         per_page_count=10
+    data['p_count'] = int(per_page_count)
     posts = Pagination(current_page,library_list.count(),int(per_page_count))
     url = 'library.html?%s&'%(urlencode(data))
     page_str = posts.page_str(url)
     return render(request, 'library.html', {'library_list': library_list.all()[posts.start:posts.end],'page_str':page_str,'data':data})
+
 
 @check_login
 def up_library(request):
@@ -36,8 +43,8 @@ def up_library(request):
     from types import FunctionType, MethodType
     files = request.FILES.getlist('k3')
     for file in files:
-        filepath = './Library/'+file.name
-        f = open(filepath, 'wb')
+        filepath = '/Library/'+file.name
+        f = open('.'+filepath, 'wb')
         for line in file.chunks():
             f.write(line)
         f.close()

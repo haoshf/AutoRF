@@ -62,7 +62,11 @@
                         <td>{{ task.id }}</td>
                         <td>{{ task.task_name }}</td>
                         <td>{{ task.documentation }}</td>
-                        <td>{{ task.status }}</td>
+                        {% if task.status.isdigit %}
+                            <td>运行中</td>
+                        {% else %}
+                            <td>{{ task.status }}</td>
+                        {% endif %}
                         <td>{{ task.user }}</td>
                         <td>{{ task.start_time }}</td>
                         <td>{{ task.end_time }}</td>
@@ -213,14 +217,19 @@
 
         window.onload=function () {
             $.ajax({
-                    url: '/work/mt_check.html',
-                    type: 'GET',
-                    success: function (arg) {
-                        if (arg.status) {
-                            console.log(arg.mes)
-                        }
+                url: '/work/mt_check.html',
+                type: 'GET',
+                dataType:'JSON',
+                success: function (arg) {
+                    console.log(arg);
+                    if (arg.status) {
+                        console.log(arg.mes)
+                    };
+                    if (arg.re_check){
+                        $('#refresh').text('停止刷新');
                     }
-                })
+                }
+            })
         };
     </script>
 {% endblock %}

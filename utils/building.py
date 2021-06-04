@@ -10,30 +10,29 @@ class Building(object):
         pass
 
     def build_testcase(self,caseids,runCase):
-        testcase_list = models.Testcase.objects.filter(id__in=caseids)
         suite_list = []
         suitefile_list = []
+        buil_resource = []
         filepath = '%s/robot/%s/'%(os.getcwd().replace('\\','/'),runCase)
         if not os.path.exists(filepath):
             os.makedirs(filepath)
         with open('%sargfile.txt'%filepath,'w',encoding='utf8') as arg:
             arg.write('-C\noff\n-W\n222')
-            for case in testcase_list:
+            for caseid in caseids:
+                case = models.Testcase.objects.filter(id=caseid).first()
                 suite = models.Suite.objects.filter(id=case.suite_id).first()
                 resource = suite.Resource
                 resource_list = eval(resource)
                 resource = models.Resource.objects.filter(id__in=resource_list)
-                print('resource--->',resource)
                 for res in list(resource):
-                    resource_list2 = eval(res.Resource)
-                    resource2 = models.Resource.objects.filter(id__in=resource_list2)
-                    print('resource2--->', resource2)
+                    resource_list2 = res.Resource
+                    if resource_list2:
+                        resource2 = models.Resource.objects.filter(id__in=eval(resource_list2))
+                        for r in resource2:
+                            print('r--->', r.id)
+                            self.build_resource(r,filepath,buil_resource)
 
-                    for r in resource2:
-                        print('r--->', r)
-                        self.build_resource(r,filepath)
-
-                    self.build_resource(res,filepath)
+                    self.build_resource(res,filepath,buil_resource)
 
                 sort = str(suite.sort)
                 if int(suite.sort) < 10:
@@ -47,21 +46,22 @@ class Building(object):
 
                     if os.path.exists(filepath_name):
                         os.remove(filepath_name)
-                    self.build_suite_basic(filepath_name, suite, resource,filepath)
+                        print('......')
+                    self.build_suite_basic(filepath_name, suite, resource,filepath,buil_resource,runCase)
 
                 with open(filepath_name, 'a', encoding='utf-8') as f:
                     arg.write('\n--test\n%s.%s.%s' %(runCase,sort + suite.suite_name,case.testcase_name))
                     f.write("\n%s"%case.testcase_name)
                     if case.Documentation:
-                        f.write('\n    [Documentation]    ' + case.Documentation)
+                        f.write('\n    [Documentation]    ' + case.Documentation.replace('\n',''))
                     if case.Tags:
-                        f.write('\n    [Tags]    ' + '    '.join(eval(case.Tags)))
+                        f.write('\n    [Tags]    ' + case.Tags.replace('|','    '))
                     if case.Setup:
-                        f.write('\n    [Setup]    ' + '    '.join(eval(case.Setup)))
+                        f.write('\n    [Setup]    ' + case.Setup.replace('|','    '))
                     if case.Template:
-                        f.write('\n    [Template]    ' + '    '.join(eval(case.Template)))
+                        f.write('\n    [Template]    ' + case.Template.replace('|','    '))
                     if case.Timeout:
-                        f.write('\n    [Timeout]    ' + case.Timeout)
+                        f.write('\n    [Timeout]    ' + case.Timeout.replace('|','    '))
                     f.write('\n')
                     table_size = {'tr': [1], 'td': [1]}
                     table_tr_list = self.deal_table(json.loads(case.Table_value),table_size)
@@ -70,7 +70,7 @@ class Building(object):
                             f.write('    %s' % table_td)
                         f.write('\n')
                     if case.Teardown:
-                        f.write('\n    [Teardown]    ' + '    '.join(eval(case.Teardown)))
+                        f.write('\n    [Teardown]    ' +  case.Teardown.replace('|','    '))
 
                 suitefile_list.append(filepath_name)
         suite_list = []
@@ -109,10 +109,20 @@ class Building(object):
             table_tr_list.append(table_td_list)
         return table_tr_list
 
-    def build_resource(self,resource_obj,filepath):
+    def build_resource(self,resource_obj,filepath,buil_resource):
+        work_path = os.getcwd().replace('\\', '/')
+        file_name = filepath.split('/')[-2]
+        print('sssssssssssssaaa',resource_obj.resource_name)
         filepath_name = '%s%s.robot'%(filepath,resource_obj.resource_name)
-        if os.path.exists(filepath_name):
+        if resource_obj.resource_name in buil_resource:
+            print('当前已构建过！')
+            return '资源构建完成！'
+        elif os.path.exists(filepath_name) and file_name.isdigit():
             os.remove(filepath_name)
+        elif os.path.exists(filepath_name):
+            print('其它地方已构建过')
+            return '资源构建完成！'
+
         keywords = models.Keyword.objects.filter(resource=resource_obj.id).all()
         Resource = models.Resource.objects.filter(id__in=eval(resource_obj.Resource))
         Library_list = []
@@ -123,17 +133,28 @@ class Building(object):
             if resource_obj.Documentation:
                 f.write('\nDocumentation    ' + resource_obj.Documentation)
             for Library in Library_list:
-                f.write("\nLibrary       " + Library.filepath)
+                if Library.library_name[-2:] == 'py':
+                    f.write("\nLibrary       " +work_path+ Library.filepath)
+                else:
+                    f.write("\nLibrary       " +Library.filepath)
             for Res in Resource:
-                f.write("\nResource       ./%s.robot"%Res)
+                f.write("\nResource       %s.robot"%Res)
+            if resource_obj.Scalar_Variables or resource_obj.List_Variables or resource_obj.Dict_Variables:
+                f.write('\n*** Variables ***\n')
+                for Variables in resource_obj.Scalar_Variables.split('|'):
+                    f.write(Variables.replace('=','    ') + '\n')
+                for Variables in resource_obj.List_Variables.split('|'):
+                    f.write(Variables.replace('=','    ') + '\n')
+                for Variables in resource_obj.Dict_Variables.split('|'):
+                    f.write(Variables.replace('=','    ') + '\n')
             f.write("\n\n*** Keywords ***")
             for word in keywords:
                 print('word.keyword_name=============',word.keyword_name)
                 f.write("\n%s"%word.keyword_name)
                 if word.Arguments:
-                    f.write('\n    [Arguments]    ' + '    '.join(eval(word.Arguments)))
+                    f.write('\n    [Arguments]    ' + word.Arguments.replace('|','    '))
                 if word.Documentation:
-                    f.write('\n    [Documentation]    ' + word.Documentation)
+                    f.write('\n    [Documentation]    ' + word.Documentation.replace('\n',''))
                 if word.Tags:
                     f.write('\n    [Tags]    ' + '    '.join(eval(word.Tags)))
                 if word.Timeout:
@@ -148,69 +169,109 @@ class Building(object):
                 if word.Teardown:
                     f.write('\n    [Teardown]    ' + '    '.join(eval(word.Teardown)))
                 if word.Return_Value:
-                    f.write('    [Return]    ' + '    '.join(eval(word.Return_Value)))
+                    f.write('    [Return]    ' + word.Return_Value.replace('|','    ')+'\n')
 
+        buil_resource.append(resource_obj.resource_name)
         return '资源构建完成！'
 
-    def build_suite_basic(self,filepath_name,suite_obj,resource,filepath):
+    def build_suite_basic(self,filepath_name,suite_obj,resource,filepath,buil_resource,runCase):
 
+        work_path = os.getcwd().replace('\\', '/')
         project = models.Project.objects.filter(id=suite_obj.project_id).first()
         Library_list = []
         if project.Library:
             Library_list = models.Library.objects.filter(id__in=eval(project.Library))
+        resource_list = []
+        if project.Resource:
+            resource_list = models.Resource.objects.filter(id__in=eval(project.Resource))
+            for res in list(resource_list):
+                resource_list2 = res.Resource
+                if resource_list2:
+                    resource2 = models.Resource.objects.filter(id__in=eval(resource_list2))
+                    for r in resource2:
+                        print('r--->', r.id)
+                        self.build_resource(r, filepath,buil_resource)
+                self.build_resource(res, filepath,buil_resource)
         with open('%s__init__.robot'%filepath, 'w', encoding='utf-8') as f:
             f.write("*** Settings ***")
             if project.Documentation:
-                f.write('\nDocumentation        ' + project.Documentation)
+                f.write('\nDocumentation        ' + project.Documentation.replace('\n',''))
             if project.Suite_Setup:
-                f.write('\nSuite Setup        ' + '    '.join(eval(project.Suite_Setup)))
+                user = models.UserInfo.objects.filter(id=runCase).first()
+                for account in json.loads(user.projectAccount):
+                    print(account)
+                    print(project.id)
+                    if str(account['project_id']) == str(project.id):
+                        Suite_Setup = '    '.join(project.Suite_Setup.split('|')[:1]+account['projectAccount'].split('|'))
+                        f.write('\nSuite Setup        ' + Suite_Setup)
+                        break
+                else:
+                    f.write('\nSuite Setup        ' + project.Suite_Setup.replace('|','    '))
             if project.Suite_Teardown:
-                f.write('\nSuite Teardown        ' + '    '.join(eval(project.Suite_Teardown)))
+                f.write('\nSuite Teardown        ' + project.Suite_Teardown.replace('|','    '))
             if project.Test_Setup:
-                f.write('\nTest Setup        ' + '    '.join(eval(project.Test_Setup)))
+                f.write('\nTest Setup        ' + project.Test_Setup.replace('|','    '))
             if project.Test_Teardown:
-                f.write('\nTest Teardown        ' + '    '.join(eval(project.Test_Teardown)))
+                f.write('\nTest Teardown        ' + project.Test_Teardown.replace('|','    '))
             if project.Force_Tags:
-                f.write('\nForce Tags        ' + '    '.join(eval(project.Force_Tags)))
+                f.write('\nForce Tags        ' + project.Force_Tags.replace('|','    '))
             for Library in Library_list:
-                f.write("\nLibrary       " + Library.filepath)
-            for res in resource:
-                f.write("\nResource       ./%s.robot"%res.resource_name)
+                if Library.library_name[-2:] == 'py':
+                    f.write("\nLibrary       " +work_path+ Library.filepath)
+                else:
+                    f.write("\nLibrary       " +Library.filepath)
+            for res in resource_list:
+                f.write("\nResource       %s.robot"%res.resource_name)
 
+            if project.Scalar_Variables or project.List_Variables or project.Dict_Variables:
+                f.write('\n*** Variables ***\n')
+                for Variables in project.Scalar_Variables.split('|'):
+                    f.write(Variables.replace('=','    ') + '\n')
+                for Variables in project.List_Variables.split('|'):
+                    f.write(Variables.replace('=','    ') + '\n')
+                for Variables in project.Dict_Variables.split('|'):
+                    f.write(Variables.replace('=','    ') + '\n')
         Library_list = []
         if suite_obj.Library:
             Library_list = models.Library.objects.filter(id__in=eval(suite_obj.Library))
         with open(filepath_name, 'w', encoding='utf-8') as f:
             f.write("*** Settings ***")
             if suite_obj.Documentation:
-                f.write('\nDocumentation        ' + suite_obj.Documentation)
+                f.write('\nDocumentation        ' + suite_obj.Documentation.replace('\n',''))
             if suite_obj.Suite_Setup:
-                f.write('\nSuite Setup        ' + '    '.join(eval(suite_obj.Suite_Setup)))
+                f.write('\nSuite Setup        ' + suite_obj.Suite_Setup.replace('|','    '))
             if suite_obj.Suite_Teardown:
-                f.write('\nSuite Teardown        ' + '    '.join(eval(suite_obj.Suite_Teardown)))
+                f.write('\nSuite Teardown        ' + suite_obj.Suite_Teardown.replace('|','    '))
             if suite_obj.Test_Setup:
-                f.write('\nTest Setup        ' + '    '.join(eval(suite_obj.Test_Setup)))
+                f.write('\nTest Setup        ' + suite_obj.Test_Setup.replace('|','    '))
             if suite_obj.Test_Teardown:
-                f.write('\nTest Teardown        ' + '    '.join(eval(suite_obj.Test_Teardown)))
+                f.write('\nTest Teardown        ' + suite_obj.Test_Teardown.replace('|','    '))
             if suite_obj.Force_Tags:
-                f.write('\nForce Tags        ' + '    '.join(eval(suite_obj.Force_Tags)))
+                f.write('\nForce Tags        ' + suite_obj.Force_Tags.replace('|','    '))
             if suite_obj.Default_Tags:
-                f.write('\nDefault Tags        ' + '    '.join(eval(suite_obj.Default_Tags)))
+                f.write('\nDefault Tags        ' + suite_obj.Default_Tags.replace('|','    '))
             if suite_obj.Test_Template:
-                f.write('\nTest Template        ' + '    '.join(eval(suite_obj.Test_Template)))
+                f.write('\nTest Template        ' + suite_obj.Test_Template.replace('|','    '))
             if suite_obj.Test_Timeout:
-                f.write('\nTest Timeout        ' + suite_obj.Test_Timeout)
+                f.write('\nTest Timeout        ' + suite_obj.Test_Timeout.replace('|','    '))
             for Library in Library_list:
-                f.write("\nLibrary       " + Library.filepath)
+                if Library.library_name[-2:] == 'py':
+                    f.write("\nLibrary       " +work_path+ Library.filepath)
+                else:
+                    f.write("\nLibrary       " +Library.filepath)
             for res in resource:
-                f.write("\nResource       ./%s.robot"%res.resource_name)
+                f.write("\nResource       %s.robot"%res.resource_name)
 
+            if suite_obj.Scalar_Variables or suite_obj.List_Variables or suite_obj.Dict_Variables:
+                f.write('\n*** Variables ***\n')
+                for Variables in suite_obj.Scalar_Variables.split('|'):
+                    f.write(Variables.replace('=','    ') + '\n')
+                for Variables in suite_obj.List_Variables.split('|'):
+                    f.write(Variables.replace('=','    ') + '\n')
+                for Variables in suite_obj.Dict_Variables.split('|'):
+                    f.write(Variables.replace('=','    ') + '\n')
             f.write("\n\n*** Test Cases ***")
 
-            #参数变量待处理
-            # if suite_obj.Scalar_Variables:
-            #     for k,v in suite_obj.Scalar_Variables:
-            #         f.write("\n\n*** Variables ***" + res.resource_name)
         return '套件基础构建完成！'
 
     def build_project(self,project_id,user_id):
@@ -223,7 +284,7 @@ class Building(object):
         dic = {
             'task_name':project,
             'documentation':[suite.suite_name for suite in suites],
-            'status': '运行中',
+            'status': '',
             'user':user_id,
             'start_time':datetime.datetime.now(),
             'take_time':'',
@@ -233,13 +294,11 @@ class Building(object):
         task = models.Task.objects.create(**dic)
         caseid_list = []
         for suite in suites:
-            caseids = models.Testcase.objects.filter(suite=suite)
-            if not caseids:
-                return 'Case', False
+            caseids = models.Testcase.objects.filter(suite=suite).order_by('sort')
             for caseid in caseids:
                 caseid_list.append(caseid.id)
         filepath = self.build_testcase(caseid_list,runCase)
-        return filepath,task
+        return filepath,task.id
 
     def build_suite(self,suite_ids,user_id):
         start = datetime.datetime.now().strftime('%y-%m-%d_%H%M%S')
@@ -251,9 +310,8 @@ class Building(object):
         for suite in suites:
             project = models.Project.objects.filter(id=suite.project_id).first()
             projects.append(project.id)
-            caseids = models.Testcase.objects.filter(suite=suite)
-            if not caseids:
-                return 'Case', False
+            caseids = models.Testcase.objects.filter(suite=suite).order_by('sort')
+
             for caseid in caseids:
                 caseid_list.append(caseid.id)
         projects = list(set(projects))
@@ -264,14 +322,15 @@ class Building(object):
             dic = {
                 'task_name': project,
                 'documentation': [suite.suite_name for suite in suites],
-                'status': '运行中',
+                'status': '',
                 'user': user_id,
                 'start_time': datetime.datetime.now(),
                 'take_time': '',
                 'report_path': '',
                 'log_path': '/robot/%s/' % runCase
             }
-            task = models.Task.objects.create(**dic)
+            print('xxxxxxxxxxxxxx',dic)
 
+            task = models.Task.objects.create(**dic)
             filepath = self.build_testcase(caseid_list, runCase)
-            return filepath,task
+            return filepath,task.id

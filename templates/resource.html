@@ -4,11 +4,7 @@
 
 
 {% block styles %}
-    <style>
-        h2 {
-            color: red;
-        }
-    </style>
+
 
 {% endblock %}
 
@@ -33,16 +29,17 @@
             <select name="project" id="project">
                 <option value="">全部</option>
                 {% for project in project_list %}
-                    {% if project.id == data.project_id %}
+                    {% if project.id == data.project %}
                         <option value="{{ project.id }}" selected>{{ project.project_name }}</option>
                     {% else %}
                         <option value="{{ project.id }}">{{ project.project_name }}</option>
                     {% endif %}
                 {% endfor %}
             </select>
-            <input type="search" placeholder="资源名称" name="resource" id="resource" value="{{ data.resource_name }}">
+            <input type="search" placeholder="资源名称" name="resource" id="resource" value="{{ data.resource }}">
             <input type="text" name="p_count" id="p_c" style="display: none">
         </form>
+{#        <img style="display:none;position:absolute;left:50%;top:50%;" id="loading" src="//img.lanrentuku.com/img/allimg/1212/5-121204193Q8.gif" alt="">#}
         <div>
             <table class="table table-bordered table-striped">
                 <thead>
@@ -72,15 +69,16 @@
                 </tbody>
             </table>
         </div>
+
         <div class="comment-list-pager">
             <ol class="breadcrumb" id="active">
             {{ page_str }}
                 <select id="p_count" style="right: auto">
-                    {% if p_count == 100 %}
+                    {% if data.p_count == 100 %}
                         <option>10</option>
                         <option>50</option>
                         <option selected>100</option>
-                    {% elif p_count == 50 %}
+                    {% elif data.p_count == 50 %}
                         <option>10</option>
                         <option selected>50</option>
                         <option>100</option>
@@ -127,6 +125,8 @@
             var p_c = $('#p_count option:selected').text();
             $("#p_c").attr("value",p_c);
             document.getElementById("searchForm").submit();
+            $('#loading').show();
+            document.getElementById('user').onload = reloadIframe;
             });
 
         window.onload=function () {
@@ -137,19 +137,22 @@
         };
         //导入文件，触发提交表单
         function uploadFile() {
-            document.getElementById('iframe1').onload = reloadIframe1;
             if($('#project option:selected').val()){
                 document.getElementById('fm1').submit();
             }else{
                 alert('请先选择项目再进行上传！')
             }
+            $('#loading').show();
+            document.getElementById('iframe1').onload = reloadIframe1;
         }
         function reloadIframe1() {
-            var content = this.contentWindow.document.body.innerHTML;
-            var obj = JSON.parse(content);
-            var tag = document.createElement('img');
-            tag.src = obj.data;
-            $('#preview').empty().append(tag);
+            alert('上传完成！');
+            window.location.reload();
+{#            var content = this.contentWindow.document.body.innerHTML;#}
+{#            var obj = JSON.parse(content);#}
+{#            var tag = document.createElement('img');#}
+{#            tag.src = obj.data;#}
+{#            $('#preview').empty().append(tag);#}
         }
     </script>
 {% endblock %}

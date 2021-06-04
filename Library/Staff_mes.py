@@ -48,9 +48,10 @@ class Staff_mes(object):
         return json.dumps(staff_dict)
 
     def update_staff(self,staff_mes,**staffs):
+        print('xxxxxxxxxxx',staff_mes)
         staff_dict = staff_mes.copy()
         staff_dict.pop('user')
-        staff_dict.pop('funcLis')
+        # staff_dict.pop('funcLis')
 
         roleList = []
         deptList = []
@@ -65,14 +66,16 @@ class Staff_mes(object):
             dept['deptId'] = dept_dict['deptId']
             dept['deptName'] = dept_dict['deptName']
             deptList.append(dept)
-
-        staff_dict.pop('roleList')
-        staff_dict.pop('deptList')
-        staff_dict['roleList'] = roleList
-        staff_dict['deptList'] = deptList
+        if roleList != []:
+            staff_dict.pop('roleList')
+            staff_dict['roleList'] = roleList
+        if deptList != []:
+            staff_dict.pop('deptList')
+            staff_dict['deptList'] = deptList
         print(staff_dict)
         for key,value in staffs.items():
-
+            if '!' in value:
+                value = int(value[1:])
             staff_dict[self.staff[key]] = value
 
         return json.dumps(staff_dict)
