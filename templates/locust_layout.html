@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+
+{% block styles %}
+    <style>
+        h2 {
+            color: red;
+        }
+        #iframe2 {
+            position: absolute;
+            transform: scale(.6, .6) translate(0%, 0%);
+            width: 135%;
+            height: 150%;
+            top: -25%;
+            left: -9%;
+            font-size: 1.6em;
+        }
+    </style>
+
+{% endblock %}
+
+{% block content %}
+    <ol class="breadcrumb" style="margin-bottom: 0;">
+        <li class="active">报告展示</li>
+    </ol>
+    <div class="container-fluid">
+    <iframe id="iframe2" name="ifra"  src="http://{{ ret.host }}:8080"></iframe>
+    </div>
+    <script>
+{#        $(function () {#}
+{#            Ready();#}
+{#        });#}
+
+        function AjaxSubmit5() {
+            document.getElementById('iframe2').onload = reloadIframe5;
+        }
+
+        function reloadIframe5() {
+            // this=当前标签
+            //console.log(ths);
+            //console.log(ths.contentWindow);
+            //console.log(ths.contentWindow.document.body.innerHTML);
+            //console.log($(ths).contents().find('body').html());
+            var src = this.contentWindow.document.body;
+            src.setAttribute("style", "font-size:1.5em;voverflow:hidden");
+        }
+            //jQuery的页面加载完成时触发的事件)
+
+         window.onload=function(){
+            AjaxSubmit5();
+        }
+
+    </script>
+{% endblock %}

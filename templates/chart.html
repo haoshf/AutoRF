@@ -1,0 +1,159 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+
+{% block styles %}
+    <style>
+        #active>li.active {
+            color: red;
+            font-size: 100px;
+        }
+    </style>
+
+{% endblock %}
+
+
+{% block content %}
+    <ol class="breadcrumb" style="margin-bottom: 0;">
+        <li class="active">报表统计</li>
+    </ol>
+    <div style="text-align: center;"><a class="btn btn-primary" onclick="show()">切换图表</a></div>
+    <div id="bar_div" style="width: 45%;height:400px;float:left;"></div>
+    <div id="bar_div2" style="width: 45%;height:400px;float:left;"></div>
+    <div id="bar_div3" style="width: 45%;height:400px;float:left;"></div>
+    <div id="bar_div4" style="width: 45%;height:400px;float:left;"></div>
+{% endblock %}
+
+{% block js %}
+<script type="text/javascript">
+    // 饼状图
+    function show_bar(id,title,data) {
+        //控件
+        var bar_widget = echarts.init(document.getElementById(id));
+        //设置option
+        option = {
+            title: {
+                text: title,
+                subtext: '来源',
+                left: 'center'
+            },
+            tooltip: {
+                trigger: 'item'
+            },
+            legend: {
+                orient: 'vertical',
+                left: 'left',
+            },
+            series: [
+                {
+                    name: '访问来源',
+                    type: 'pie',
+                    radius: '50%',
+                    data: data,
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }
+            ]
+            };
+        bar_widget.setOption(option)
+    }
+    // 柱状图
+    function show_bar2(id,name,data1,data2) {
+        //控件
+        var bar_widget = echarts.init(document.getElementById(id));
+        //设置option
+        option = {
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {            // 坐标轴指示器，坐标轴触发有效
+                    type: 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+                }
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            },
+            xAxis: [
+                {
+                    type: 'category',
+                    data: data1,
+                    axisTick: {
+                        alignWithLabel: true
+                    }
+                }
+            ],
+            yAxis: [
+                {
+                    type: 'value'
+                }
+            ],
+            series: [
+                {
+                    name: name,
+                    type: 'bar',
+                    barWidth: '60%',
+                    data: data2
+                }
+            ]
+        };
+        bar_widget.setOption(option)
+    }
+    //显示即加载调用
+    window.onload = function () {
+        //发送post请求，地址为index（Jquery）
+        $('#bar_div3').hide();
+        $('#bar_div4').hide();
+        $.ajax({
+            url: "/chart/chart.html",
+            type: "POST",
+            data: {},
+            success: function (data) {
+                var p_s = [];
+                var p_s1 = [];
+                var p_s2 = [];
+
+                $.each(JSON.parse(data['p_s']), function(i,data_list){
+                    var msg = {value: data_list['sc'], name: data_list['project__project_name']};
+                    p_s.push(msg);
+                    p_s1.push(data_list['project__project_name']);
+                    p_s2.push(data_list['sc'])
+                });
+                show_bar('bar_div','项目下对应套件数量',p_s);
+                show_bar2('bar_div3','套件数量',p_s1,p_s2);
+
+                var p_c = [];
+                var p_c1 = [];
+                var p_c2 = [];
+                $.each(JSON.parse(data['p_c']), function(i,data_list){
+                    var msg = {value: data_list['c'], name: data_list['suite__project__project_name']};
+                    p_c.push(msg);
+                    p_c1.push(data_list['suite__project__project_name']);
+                    p_c2.push(data_list['c'])
+                });
+                show_bar('bar_div2','项目下对应用例数量',p_c);
+                show_bar2('bar_div4','用例数量',p_c1,p_c2);
+            }
+        })
+    };
+
+    function show() {
+        if ($('#bar_div3').css('display') == 'none'){
+            $('#bar_div,#bar_div2').hide();
+            $('#bar_div3,#bar_div4').show();
+            echarts.init(document.getElementById('bar_div3')).resize();
+            echarts.init(document.getElementById('bar_div4')).resize();
+        } else {
+            $('#bar_div,#bar_div2').show();
+            $('#bar_div3,#bar_div4').hide();
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,142 @@
+<div class="modal fade" id="eidtUser" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">修改用户信息</h4>
+            </div>
+            <div class="modal-body">
+
+                <form id="fm" class="form-horizontal">
+                    <div class="form-group">
+                        <label for="username" class="col-sm-2 control-label">用户名</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" name="username" placeholder="用户名">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="password" class="col-sm-2 control-label">密码</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" name="password" placeholder="密码">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="nickname" class="col-sm-2 control-label">昵称</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" name="nickname" placeholder="昵称">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="email" class="col-sm-2 control-label">Email</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" name="email" placeholder="Email">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="project_id" class="col-sm-2 control-label">项目<a onclick="add(this)">+</a><a onclick="del(this)">-</a></label>
+                        <div class="col-sm-10" >
+                            <select class="form-control project_id" name="project_id"></select>
+                            <input type="text" class="form-control" name="projectAccount" />
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <span id="errorMsg" style="color: red;"></span>
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="btnEditSave">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $('#user').click(function () {
+        $('#eidtUser').modal('show');
+        $.ajax({
+            url: '/get_userinfo',
+            type: 'GET',
+            data: {'nid': {{ request.session.user_info.id }}},
+            dataType: 'JSON',
+            success: function (arg) {
+                $('#eidtUser').modal('show');
+                console.log(arg.mes.userinfo.username);
+                if (arg.status) {
+                    $('#eidtUser input[name="username"]').val(arg.mes.userinfo.username);
+                    $('#eidtUser input[name="password"]').val(arg.mes.userinfo.password);
+                    $('#eidtUser input[name="nickname"]').val(arg.mes.userinfo.nickname);
+                    $('#eidtUser input[name="email"]').val(arg.mes.userinfo.email);
+                    $('.project_id').empty();
+                    if (arg.mes.userinfo.projectAccount){
+                        var projectAccount = JSON.parse(arg.mes.userinfo.projectAccount);
+                        $.each(projectAccount, function(i,account){
+                            add($('.project_id:first')[0]);
+                            var x = 1 + i++;
+                            console.log(x);
+                            $('#eidtUser input[name="projectAccount"]').eq(x).val(account['projectAccount']);
+                            $.each(arg.mes.project, function(e,project){
+                                if (account['project_id']==project.pk){
+                                    $('.project_id').eq(x).append("<option value="+project.pk+" selected>"+project.fields.project_name+"</option>")
+                                } else {
+                                    $('.project_id').eq(x).append("<option value="+project.pk+">"+project.fields.project_name+"</option>")
+                                }
+                            })
+                        });
+                        del($('.project_id:first')[0]);
+                    } else {
+                        $.each(arg.mes.project, function(e,project){
+                            $('.project_id').append("<option value="+project.pk+">"+project.fields.project_name+"</option>")
+                        })
+                    }
+                } else {
+                    alert(arg.mes)
+                }
+            }
+        });
+    });
+
+    $('#btnEditSave').click(function () {
+        var postData = {'id':{{ request.session.user_info.id }}};
+        var project_dict = {};
+        var project_list = [];
+        $('#eidtUser').find('input,select').each(function () {
+            var v = $(this).val();
+            var n = $(this).attr('name');
+            if (project_dict.hasOwnProperty("project_id") && project_dict.hasOwnProperty("projectAccount")){
+                project_list.push(project_dict);
+                project_dict ={};
+                project_dict[n]=v;
+            }
+            else if($.inArray(n, ['project_id','projectAccount'])!=-1){
+                project_dict[n]=v;
+            }else{
+                postData[n] = v;
+            }
+        });
+        project_list.push(project_dict);
+        postData['projectAccount']=project_list;
+        console.log(postData);
+        $.ajax({
+            url: '/saveUserInfo',
+            type: 'POST',
+            data: JSON.stringify(postData),
+            dataType: 'JSON',
+            success:function (arg) {
+                if(arg.status){
+                    window.location.reload();
+                } else{
+                    alert(arg.message);
+                }
+            }
+        })
+    });
+    function add(obj) {
+        console.log(obj);
+        var brothers = obj.parentElement.parentElement.cloneNode(true);
+        obj.parentNode.parentNode.after(brothers);
+    }
+
+    function del(obj) {
+        obj.parentElement.parentElement.remove()
+    }
+</script>
